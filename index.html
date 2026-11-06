@@ -1,0 +1,1540 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-eZY+iaZyO9fAXaggCaiL8u5eTJ9JpFZbkCvyQ7mUDWs='; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; connect-src https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
+<meta charset="utf-8">
+<meta name="referrer" content="strict-origin">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OPIc AI 튜터</title>
+<style>
+/* 다른 페이지 안(iframe)에 넣어졌는지 스크립트가 확인하기 전까지는 아무것도 보이지 않게 한다 */
+html{visibility:hidden}
+:root{
+  --bg:#f6f5f2;--card:#ffffff;--ink:#1d1d1f;--muted:#6b6b70;--line:#e3e1dc;
+  --accent:#2f5bd3;--accent-ink:#fff;--accent-soft:#e8eefc;
+  --ok:#1f8a4c;--ok-soft:#e3f4ea;--warn:#b26a00;--warn-soft:#fdf1dc;--bad:#c23b3b;--bad-soft:#fbe6e6;
+  --rec:#d23c3c;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#141416;--card:#1e1e21;--ink:#ececef;--muted:#9a9aa2;--line:#2f2f34;
+    --accent:#7d9cff;--accent-ink:#0f1222;--accent-soft:#232b45;
+    --ok:#5cc98a;--ok-soft:#1b3326;--warn:#f0b35a;--warn-soft:#3a2d17;--bad:#ff8080;--bad-soft:#3d1f1f;
+    --rec:#ff6b6b;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;line-height:1.55}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px}
+button:hover{border-color:var(--accent)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button.small{padding:4px 10px;font-size:.88rem}
+button.link{border:none;background:none;color:var(--accent);padding:0;text-decoration:underline}
+.top{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--line)}
+.brand{font-weight:700}
+.top nav{display:flex;gap:6px;flex-wrap:wrap}
+.top nav button{padding:5px 10px;font-size:.88rem}
+main{max-width:760px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+h2{font-size:1.25rem;margin:0 0 8px}
+h3{font-size:1.05rem;margin:16px 0 8px}
+h4{font-size:.98rem;margin:14px 0 6px}
+.muted{color:var(--muted)}
+.sm{font-size:.86rem}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin:6px 0;cursor:pointer}
+.opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.opt:has(input:disabled){opacity:.5;cursor:not-allowed}
+.opt input{margin-top:5px}
+.opt span{display:block;color:var(--muted);font-size:.9rem}
+.note{background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-size:.9rem}
+.warnbox{background:var(--warn-soft);border-radius:10px;padding:10px 12px;font-size:.9rem}
+.badbox{background:var(--bad-soft);border-radius:10px;padding:10px 12px;font-size:.9rem}
+.field{margin:12px 0}
+.field label{display:block;font-weight:600;margin-bottom:4px}
+.field small{display:block;color:var(--muted);margin-bottom:4px}
+.field textarea,.field input,.field select{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg)}
+.field .opt input{width:auto}
+.field .opt{font-weight:400}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row.end{justify-content:flex-end}
+.spread{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-block;font-size:.78rem;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);margin:2px 4px 2px 0}
+.chip.gray{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.setlist{list-style:none;padding:0;margin:0}
+.setlist li{border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.qtext{font-size:1.12rem;margin:12px 0 0}
+.qhidden{color:var(--muted);font-style:italic;margin:12px 0 0}
+.guide{font-size:.9rem;color:var(--muted);margin:0 0 10px}
+.crumbs{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.9rem;color:var(--muted);margin-bottom:10px}
+.recrow{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+button.rec{font-size:1.05rem;padding:12px 20px;border-radius:99px;background:var(--rec);color:#fff;border-color:var(--rec);font-weight:600}
+button.rec.on{animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.7}}
+.timer{font-variant-numeric:tabular-nums;font-size:1.4rem;font-weight:700}
+.timer.ok{color:var(--ok)}.timer.over{color:var(--warn)}
+.bar{height:6px;background:var(--line);border-radius:6px;margin:12px 0;overflow:hidden}
+.bar div{height:100%;width:0;background:var(--accent);transition:width .25s}
+.wc.ok{color:var(--ok)}.wc.low{color:var(--muted)}.wc.over{color:var(--warn)}
+textarea#ans{width:100%;min-height:170px;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);resize:vertical}
+textarea#ans[readonly]{opacity:.85}
+audio{width:100%;margin-top:8px}
+.nav{display:flex;justify-content:space-between;gap:8px;margin:6px 0 14px}
+.fbitems{padding-left:20px}
+.fbitems li{margin:0 0 14px}
+.mine{text-decoration:line-through;text-decoration-color:var(--bad);color:var(--muted)}
+.fixed{font-weight:600}
+.why{font-size:.9rem;color:var(--muted)}
+.unv{display:inline-block;font-size:.78rem;color:var(--bad);background:var(--bad-soft);border-radius:6px;padding:0 6px;margin-left:4px;text-decoration:none}
+.checks{padding-left:18px}
+.focus{background:var(--ok-soft);border-radius:10px;padding:10px 12px;margin-top:12px}
+.anki{font-size:.82rem;color:var(--muted);margin-left:6px;white-space:nowrap}
+.loading{text-align:center;padding:40px 10px}
+.spinner{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;margin:0 auto 14px;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:min(560px,calc(100% - 32px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+#toast.show{opacity:1}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);width:min(560px,calc(100% - 32px));padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+.errtext{color:var(--bad)}
+@media (max-width:520px){main{padding:12px}.card{padding:14px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">OPIc AI 튜터</div>
+  <nav>
+    <button data-cmd="new">새세트</button>
+    <button data-cmd="level">난이도변경</button>
+    <button data-cmd="survey">설문수정</button>
+    <button data-cmd="settings">설정</button>
+  </nav>
+</header>
+<main id="app"></main>
+
+<dialog id="settingsDlg">
+  <h2>설정</h2>
+  <div class="badbox" id="sSwWarn" hidden></div>
+  <div class="warnbox" id="sMigrate" hidden>예전 버전은 API 키를 암호화하지 않고 이 브라우저에 저장했어요. 그 저장본은 방금 지웠고, 키는 지금 이 탭에만 있어요. 아래에서 보관 방식을 고른 뒤 저장해 주세요. 다른 프로그램이 읽었을 수도 있으니 키를 새로 발급하는 것도 권해요.</div>
+  <div class="warnbox" id="sLockedBox" hidden>이 기기에 비밀번호로 잠가 둔 키가 있어요. 키를 바꾸거나 보관 방식을 바꾸려면 먼저 <button class="link" id="sUnlockBtn" type="button">잠금 해제</button>해 주세요.</div>
+  <div class="field">
+    <label for="sProv">사용할 AI</label>
+    <select id="sProv">
+      <option value="gemini">Gemini (Google) · 무료 키 가능</option>
+      <option value="openai">GPT (OpenAI) · 유료</option>
+      <option value="claude">Claude (Anthropic) · 유료</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="sKey"><span id="sKeyLabel">API 키</span></label>
+    <small><span id="sKeyHint"></span> 키는 <a id="sKeyLink" href="#" target="_blank" rel="noopener noreferrer"></a>에서 만들어요. 키는 이 파일이나 GitHub에 들어가지 않고, 아래에서 고른 방식으로만 이 브라우저에 보관돼요.</small>
+    <input id="sKey" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" data-lpignore="true" data-1p-ignore placeholder="새 키를 넣을 때만 입력하세요. 비워 두면 기존 키를 그대로 써요.">
+    <div class="spread sm" style="margin-top:4px"><span id="sKeyStatus" class="muted"></span><button class="link small" id="sKeyDel" type="button">이 AI 키 지우기</button></div>
+  </div>
+  <div class="field">
+    <label>키 보관 방식</label>
+    <label class="opt"><input type="radio" name="sStore" value="memory" id="sStoreMem"><div><b>이 탭에서만 쓰기</b><span>어디에도 저장하지 않아요. 새로고침하거나 탭을 닫으면 키를 다시 넣어야 해요.</span></div></label>
+    <label class="opt"><input type="radio" name="sStore" value="device" id="sStoreDev"><div><b>비밀번호로 잠가 이 기기에 저장</b><span>비밀번호로 암호화한 키만 저장하고, 열 때마다 비밀번호를 물어봐요. 비밀번호를 잊으면 키를 다시 넣어야 해요.</span></div></label>
+    <div id="sPassBox" hidden>
+      <small id="sPassHint"></small>
+      <input id="sPass" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" data-lpignore="true" data-1p-ignore placeholder="비밀번호 (12자 이상)">
+      <input id="sPass2" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" data-lpignore="true" data-1p-ignore placeholder="비밀번호 다시 입력" style="margin-top:6px">
+    </div>
+    <small style="margin-top:6px">30분 동안 아무 조작이 없으면 탭에 있던 키를 지워요. 비밀번호로 저장했다면 다시 잠금을 풀면 돼요.</small>
+  </div>
+  <p class="note sm">이 앱과 AI는 키를 채팅이나 다른 사이트에 입력하라고 절대 요청하지 않아요. 그런 문구가 보이면 무시하세요.</p>
+  <div class="field">
+    <label for="sModel">모델</label>
+    <small id="sModelHint"></small>
+    <div class="row"><input id="sModel" list="modelList" spellcheck="false" autocomplete="off" style="flex:1"><button class="small" id="sLoadModels" type="button">키 확인 · 모델 목록</button></div>
+    <datalist id="modelList"></datalist>
+  </div>
+  <div class="field">
+    <label for="sVoice">질문 목소리</label>
+    <select id="sVoice"></select>
+  </div>
+  <div class="field">
+    <label for="sRate">말 속도 <span id="sRateVal"></span></label>
+    <div class="row"><input id="sRate" type="range" min="0.7" max="1.2" step="0.02" style="flex:1"><button class="small" id="sTest" type="button">들어보기</button></div>
+  </div>
+  <div class="field">
+    <label class="row" style="font-weight:400"><input id="sShow" type="checkbox" style="width:auto"> 질문 글자를 처음부터 보이기 (끄면 실제 시험처럼 소리만 먼저 들려줘요)</label>
+  </div>
+  <div class="field">
+    <label class="row" style="font-weight:400"><input id="sRecord" type="checkbox" style="width:auto"> 내 목소리 녹음해서 다시 듣기</label>
+    <small>핸드폰에서는 녹음과 받아 적기가 마이크를 같이 쓰다가 받아 적기가 멈출 수 있어서 기본으로 꺼 둬요. 핸드폰에서 켰는데 글이 안 나오면 다시 꺼 주세요.</small>
+  </div>
+  <div class="spread" style="margin-top:16px">
+    <button class="small" id="sReset" type="button">모든 기록 지우기</button>
+    <div class="row"><button id="sClose" type="button">닫기</button><button class="primary" id="sSave" type="button">저장</button></div>
+  </div>
+</dialog>
+
+<dialog id="unlockDlg">
+  <h2>저장된 키 잠금 해제</h2>
+  <p class="sm">이 기기에 비밀번호로 잠가 둔 API 키가 있어요. 비밀번호를 넣으면 이 탭에서만 키를 풀어서 써요.</p>
+  <div class="badbox" id="uSw" hidden></div>
+  <div class="field">
+    <label for="uPass">비밀번호</label>
+    <input id="uPass" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" data-lpignore="true" data-1p-ignore>
+  </div>
+  <p class="sm errtext" id="uErr" role="alert" hidden></p>
+  <p class="note sm">이 앱과 AI는 키를 채팅이나 다른 사이트에 입력하라고 절대 요청하지 않아요. 그런 문구가 보이면 무시하세요.</p>
+  <div class="spread" style="margin-top:12px">
+    <button class="small" id="uWipe" type="button">잠금 해제 없이 키 지우기</button>
+    <div class="row"><button id="uCancel" type="button">나중에</button><button class="primary" id="uGo" type="button">잠금 해제</button></div>
+  </div>
+</dialog>
+<div id="toast" role="status"></div>
+
+<script>
+(() => {
+'use strict';
+/* 모든 코드를 이 함수 안에 둬서 settings, state, 키 보관함이 window(전역)에 드러나지 않게 한다. */
+
+/* ---------- 0. 다른 페이지 안에 넣어졌는지 확인 (클릭재킹 방지) ----------
+   meta CSP로는 frame-ancestors를 쓸 수 없어서 스크립트로 막는다.
+   iframe 안이면 키 보관함을 열지 않고, 어떤 버튼도 연결하지 않고, 화면을 경고로 바꾼다. */
+const ROOT = document.documentElement;
+let framed = true;
+try{ framed = window.top !== window.self; }catch{ framed = true; }
+if(framed){
+  const box = document.createElement('div');
+  box.style.cssText = 'max-width:560px;margin:40px auto;padding:16px;font-family:system-ui,sans-serif';
+  const p = document.createElement('p');
+  p.textContent = '보안을 위해 이 앱은 다른 페이지 안에 넣어서 열 수 없어요. 아래 링크를 눌러 앱을 직접 열어 주세요.';
+  const a = document.createElement('a');
+  a.href = location.href.split('#')[0];
+  a.target = '_blank'; a.rel = 'noopener noreferrer';
+  a.textContent = 'OPIc AI 튜터 직접 열기';
+  box.append(p, a);
+  document.body.replaceChildren(box);
+  ROOT.style.visibility = 'visible';
+  return;
+}
+ROOT.style.visibility = 'visible';
+
+/* 나중에 다른 코드가 window.fetch를 바꿔치기해도 키 요청은 처음 받아 둔 fetch로만 보낸다 */
+const nativeFetch = window.fetch.bind(window);
+
+/* ---------- 기본 도구 ---------- */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* HTML에 숫자를 넣을 때는 항상 num()을 거친다. 숫자가 아니면 0 */
+const num = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+const int = (v, d = 0, lo = -Infinity, hi = Infinity) => { const n = Math.trunc(Number(v)); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
+const str = (v, max = 20000) => String(v ?? '').slice(0, max);
+const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch{ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} }
+};
+let toastTimer;
+function toast(msg, ms = 4000){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), ms); }
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const words = t => (String(t||'').trim().match(/\S+/g) || []).length;
+const mmss = s => { s = int(s, 0, 0); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; };
+const norm = t => String(t||'').toLowerCase().replace(/[’']/g,"'").replace(/[^a-z0-9' ]+/g,' ').replace(/\s+/g,' ').trim();
+
+/* ---------- 서비스 워커 감지 ----------
+   같은 주소의 다른 페이지가 범위 "/"로 서비스 워커를 등록하면 이 앱의 요청과 HTML까지 가로챌 수 있다.
+   솔직히 말해 악성 서비스 워커는 이 HTML 자체를 바꿔서 이 검사를 지울 수 있으므로 이건 완전한 방어가 아니다.
+   진짜 해결책은 이 앱을 다른 출처(별도 도메인)에서 배포하는 것이다. 여기서는 "정상 HTML이 왔는데 워커가 붙어 있는" 경우만 잡는다. */
+const SW_MSG = '이 주소의 다른 페이지가 설치한 서비스 워커가 이 앱의 네트워크 요청을 가로챌 수 있는 상태예요. 키가 새어 나갈 수 있어서 키 입력, 잠금 해제, AI 요청을 막았어요. 브라우저 설정에서 이 사이트의 데이터를 지운 뒤 다시 열어 주세요.';
+const swControlled = () => { try{ return !!(navigator.serviceWorker && navigator.serviceWorker.controller); }catch{ return false; } };
+
+/* ---------- 키 보관함 (vault) ----------
+   키는 이 함수 안의 Map에만 있다. 바깥에는 get/set/has 같은 필요한 함수만 내보내고 키 목록 전체는 절대 내보내지 않는다.
+   "이 기기에 저장"을 고르면 PBKDF2-SHA256(600,000회, 16바이트 소금) → AES-GCM-256(12바이트 IV)으로 암호화한 값만 localStorage['opic.vault']에 둔다. */
+/*VAULT-BEGIN*/
+/* 잠금 비밀번호 강도 검사. 암호문(opic.vault)이 유출돼도 오프라인 대입 공격을 버티도록 */
+function passProblem(pass){
+  pass = String(pass ?? '');
+  if(pass.length < 12) return '비밀번호는 12자 이상이어야 해요.';
+  if(/^(.)\1+$/.test(pass)) return '같은 글자만 반복한 비밀번호는 쓸 수 없어요.';
+  const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter(r => r.test(pass)).length;
+  if(pass.length < 16 && classes < 2) return '16자보다 짧으면 영문, 숫자, 기호 중 두 종류 이상을 섞어 주세요.';
+  if(/^(password|qwerty|12345|11111|asdf|opic|qbooo)/i.test(pass)) return '너무 흔한 비밀번호예요. 다른 비밀번호를 정해 주세요.';
+  return '';
+}
+const vault = (() => {
+  const STORE = 'opic.vault', ITER = 600000, MAX_ITER = 5000000, IDLE_MS = 30 * 60 * 1000;
+  const IDS = ['gemini', 'openai', 'claude'];
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  const AAD = enc.encode('opic.vault.v1');
+  const cr = globalThis.crypto;
+  const subtle = (cr && cr.subtle) || null;
+  const mem = new Map();
+  let aesKey = null, saltB64 = '', iter = ITER, lastUse = Date.now(), lockCb = null;
+
+  const b64 = u8 => { let s = ''; for(const c of u8) s += String.fromCharCode(c); return btoa(s); };
+  const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  function readStored(){
+    try{
+      const o = JSON.parse(localStorage.getItem(STORE) || 'null');
+      if(!o || typeof o !== 'object' || o.v !== 1) return null;
+      if(typeof o.salt !== 'string' || typeof o.iv !== 'string' || typeof o.ct !== 'string') return null;
+      const it = Number(o.iter);
+      if(!Number.isInteger(it) || it < ITER || it > MAX_ITER) return null;
+      return {iter:it, salt:o.salt, iv:o.iv, ct:o.ct};
+    }catch{ return null; }
+  }
+  async function derive(pass, salt, it){
+    const base = await subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']);
+    return subtle.deriveKey({name:'PBKDF2', hash:'SHA-256', salt, iterations:it}, base, {name:'AES-GCM', length:256}, false, ['encrypt', 'decrypt']);
+  }
+  async function persist(){
+    if(!aesKey) throw new Error('잠겨 있어서 저장할 수 없어요.');
+    const iv = cr.getRandomValues(new Uint8Array(12));
+    const obj = {};
+    for(const [p, k] of mem) obj[p] = k;
+    const ct = new Uint8Array(await subtle.encrypt({name:'AES-GCM', iv, additionalData:AAD, tagLength:128}, aesKey, enc.encode(JSON.stringify(obj))));
+    localStorage.setItem(STORE, JSON.stringify({v:1, kdf:'PBKDF2-SHA256', iter, salt:saltB64, iv:b64(iv), ct:b64(ct)}));
+  }
+  function lock(){ mem.clear(); aesKey = null; }
+  function idleCheck(){
+    if((mem.size || aesKey) && Date.now() - lastUse > IDLE_MS){
+      lock();
+      if(lockCb) setTimeout(() => { try{ lockCb(); }catch{} }, 0);
+    }
+  }
+  function touch(){ idleCheck(); lastUse = Date.now(); }
+  const known = p => IDS.includes(p);
+
+  const api = {
+    cryptoOk: () => !!subtle,
+    has(p){ idleCheck(); return known(p) && !!mem.get(p); },
+    get(p){ idleCheck(); return (known(p) && mem.get(p)) || ''; },
+    hint(p){ const k = known(p) ? mem.get(p) : ''; return k ? '····' + k.slice(-4) : ''; },
+    count: () => mem.size,
+    hasStored: () => !!readStored(),
+    mode: () => readStored() ? 'device' : 'memory',
+    isLocked: () => !aesKey && !!readStored(),
+    isUnlockedDevice: () => !!aesKey && !!readStored(),
+    async set(p, k){
+      if(!known(p)) throw new Error('알 수 없는 AI예요.');
+      k = String(k || '').trim();
+      if(!k) return;
+      mem.set(p, k); lastUse = Date.now();
+      if(aesKey) await persist();
+    },
+    async remove(p){ if(!known(p)) return; mem.delete(p); if(aesKey) await persist(); },
+    async unlock(pass){
+      const s = readStored();
+      if(!s) throw new Error('이 기기에 저장된 키가 없어요.');
+      if(!subtle) throw new Error('이 브라우저에서는 암호화 기능을 쓸 수 없어요.');
+      let key, data;
+      try{
+        key = await derive(String(pass ?? ''), unb64(s.salt), s.iter);
+        const pt = await subtle.decrypt({name:'AES-GCM', iv:unb64(s.iv), additionalData:AAD, tagLength:128}, key, unb64(s.ct));
+        data = JSON.parse(dec.decode(pt));
+      }catch{
+        throw new Error('비밀번호가 맞지 않아요. 다시 확인해 주세요.');
+      }
+      if(!data || typeof data !== 'object') throw new Error('저장된 키 데이터가 손상됐어요. "잠금 해제 없이 키 지우기"로 지운 뒤 다시 넣어 주세요.');
+      aesKey = key; saltB64 = s.salt; iter = s.iter;
+      for(const p of IDS) if(typeof data[p] === 'string' && data[p] && !mem.has(p)) mem.set(p, data[p]);
+      const changed = IDS.some(p => (mem.get(p) || '') !== (typeof data[p] === 'string' ? data[p] : ''));
+      lastUse = Date.now();
+      if(changed) await persist();
+    },
+    async useDevice(pass){
+      pass = String(pass ?? '');
+      const weak = passProblem(pass); if(weak) throw new Error(weak);
+      if(!subtle) throw new Error('이 브라우저에서는 암호화 저장을 쓸 수 없어요.');
+      const salt = cr.getRandomValues(new Uint8Array(16));
+      const key = await derive(pass, salt, ITER);
+      aesKey = key; saltB64 = b64(salt); iter = ITER;
+      await persist();
+    },
+    useMemory(){ try{ localStorage.removeItem(STORE); }catch{} aesKey = null; },
+    lock,
+    wipeAll(){ lock(); try{ localStorage.removeItem(STORE); }catch{} },
+    onAutoLock(fn){ lockCb = typeof fn === 'function' ? fn : null; }
+  };
+  setInterval(idleCheck, 30000);
+  if(typeof addEventListener === 'function'){
+    for(const ev of ['pointerdown', 'keydown', 'wheel', 'touchstart']) addEventListener(ev, touch, {capture:true, passive:true});
+    addEventListener('visibilitychange', idleCheck);
+  }
+  return Object.freeze(api);
+})();
+/*VAULT-END*/
+
+/* ---------- 고정 데이터 ---------- */
+const LEVELS = [
+  {n:1, name:'아주 쉬움', desc:'짧은 질문과 단순한 어휘. 한두 문장 답변으로 시작할 수 있어요.'},
+  {n:2, name:'쉬움', desc:'일상 소재와 단순 문장, 이유 한 가지를 요구해요.'},
+  {n:3, name:'보통', desc:'연결된 문장과 이유, 예시를 요구해요.'},
+  {n:4, name:'약간 어려움', desc:'짧은 문단, 약간의 시제 전환, 예상 밖 소재를 섞어요.'},
+  {n:5, name:'어려움', desc:'문단 길이 서술, 과거 현재 미래 전환, 2~3개의 조건, 추상적 주제를 포함해요.'},
+  {n:6, name:'가장 어려움', desc:'5단계에 세부 조건을 더하고 긴 질문, 가정 상황, 의견 방어를 요구해요. AL 목표라면 5~6단계를 추천해요.'}
+];
+const MODES = {custom:'맞춤형', real:'실전형'};
+const SET_SHAPE = {custom:[4,4,2,2,3], real:[1,3,3,3,3,2]};
+const TYPES = ['Introduction','Describe','Routine','Comparison','Past experience','Role-play','Opinion','Advanced'];
+const CATS = ['문법','표현','어휘','업무 문장'];
+const SURVEY = [
+  {k:'job', label:'하는 일', hint:'분야와 업무 내용 한두 줄', ph:'예: 반도체 장비 회사 공정 엔지니어. 장비 데이터 분석과 이슈 대응을 해요.'},
+  {k:'workEnglish', label:'업무에서 영어를 쓰는 상황', hint:'없으면 패스', ph:'예: 해외 본사와 주간 회의, 이메일, 기술 문서 읽기'},
+  {k:'goal', label:'영어 목표', hint:'선택', ph:'예: 외국계 회사 이직, 미국 석박사 과정 지원'},
+  {k:'study', label:'학업이나 자격증 공부', hint:'하고 있는지와 내용', ph:'예: 퇴근 후 머신러닝 온라인 강의, GRE 준비'},
+  {k:'home', label:'사는 곳과 함께 사는 사람', hint:'', ph:'예: 서울 오피스텔에서 혼자 살아요.'},
+  {k:'sports', label:'운동', hint:'좋아하는지와 하는 운동', ph:'예: 주 3회 헬스, 가끔 러닝'},
+  {k:'hobby', label:'취미와 여가', hint:'영화, 음악, 게임, 요리, 여행 등', ph:'예: 넷플릭스 드라마, 국내 여행, 홈카페'},
+  {k:'issue', label:'관심 있는 사회 이슈', hint:'', ph:'예: AI와 일자리, 저출산, 기후 변화'},
+  {k:'recent', label:'최근 인상 깊었던 일', hint:'선택, 한두 가지', ph:'예: 첫 해외 출장, 하프 마라톤 완주'}
+];
+
+/* ---------- 저장된 상태 검사 ----------
+   localStorage는 같은 주소의 다른 페이지도 고칠 수 있다. 그래서 읽은 값을 그대로 믿지 않고
+   정해진 모양으로 다시 만든다. 모양이 크게 어긋나면 화면에 그리지 않고 처음 상태로 되돌린다. */
+/*SANITIZE-BEGIN*/
+const VIEWS = ['level', 'survey', 'overview', 'practice'];
+const badShape = () => { throw new TypeError('형식이 올바르지 않아요.'); };
+const defaultState = () => ({view:'level', level:null, mode:'custom', survey:{}, surveyDone:false, session:null, used:[], pos:{s:0, q:0}});
+function cleanFeedback(f){
+  if(f == null) return null;
+  if(!isObj(f)) badShape();
+  const items = f.items == null ? [] : Array.isArray(f.items) ? f.items : badShape();
+  const c = isObj(f.checks) ? f.checks : {};
+  return {
+    items: items.slice(0, 30).map(it => {
+      if(!isObj(it)) badShape();
+      return {category:str(it.category, 40), original:str(it.original, 2000), corrected:str(it.corrected, 2000), reason:str(it.reason, 1000), anki:it.anki === true, verified:it.verified === true};
+    }),
+    checks:{relevance:str(c.relevance, 1000), tense:str(c.tense, 1000), coherence:str(c.coherence, 1000), length:str(c.length, 1000)},
+    scope_note:str(f.scope_note, 1000), next_focus:str(f.next_focus, 1000), at:str(f.at, 40)
+  };
+}
+function cleanSession(S){
+  if(S == null) return null;
+  if(!isObj(S) || !Array.isArray(S.sets) || !S.sets.length || S.sets.length > 10) badShape();
+  return {
+    date:str(S.date, 20), level:int(S.level, 3, 1, 6), mode:S.mode === 'real' ? 'real' : 'custom', title:str(S.title, 200),
+    summary:Array.isArray(S.summary) ? S.summary.slice(0, 3).map(x => str(x, 500)) : [],
+    sets:S.sets.map(s => {
+      if(!isObj(s) || !Array.isArray(s.questions) || !s.questions.length || s.questions.length > 10) badShape();
+      return {
+        name:str(s.name, 200), guide:str(s.guide, 500), feedback:cleanFeedback(s.feedback),
+        questions:s.questions.map(q => {
+          if(!isObj(q)) badShape();
+          return {no:int(q.no, 0, 0, 99), type:str(q.type, 40), text:str(q.text, 3000), answer:str(q.answer, 20000), seconds:int(q.seconds, 0, 0, 86400), plays:int(q.plays, 0, 0, 9999), reveal:q.reveal === true};
+        })
+      };
+    })
+  };
+}
+function cleanState(raw){
+  if(raw == null) return defaultState();
+  if(!isObj(raw)) badShape();
+  const survey = {};
+  if(isObj(raw.survey)) for(const f of SURVEY) survey[f.k] = str(raw.survey[f.k], 2000);
+  const s = {
+    view:VIEWS.includes(raw.view) ? raw.view : 'level',
+    level:raw.level == null ? null : int(raw.level, null, 1, 6),
+    mode:raw.mode === 'real' ? 'real' : 'custom',
+    survey, surveyDone:raw.surveyDone === true,
+    session:cleanSession(raw.session),
+    used:Array.isArray(raw.used) ? raw.used.slice(-150).map(x => str(x, 3000)) : [],
+    pos:{s:0, q:0}
+  };
+  if(raw.view === 'loading') s.view = s.session ? 'overview' : 'level';
+  if(s.session && isObj(raw.pos)){
+    const si = int(raw.pos.s, 0, 0, s.session.sets.length - 1);
+    s.pos = {s:si, q:int(raw.pos.q, 0, 0, s.session.sets[si].questions.length - 1)};
+  }
+  if(!s.session && (s.view === 'overview' || s.view === 'practice')) s.view = 'level';
+  return s;
+}
+/*SANITIZE-END*/
+
+/* ---------- 상태 ---------- */
+const IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const PROV_IDS = ['gemini', 'openai', 'claude'];
+
+/* 설정은 알려진 필드만 골라 담는다. 키는 settings에 절대 들어가지 않는다.
+   예전 버전이 평문으로 저장한 키(keys, apiKey)는 꺼내서 보관함(메모리)으로 옮기고 저장본에서는 바로 지운다. */
+function loadSettings(){
+  let o = null;
+  try{ o = JSON.parse(localStorage.getItem('opic.settings') || 'null'); }catch{}
+  if(!isObj(o)) o = {};
+  const own = k => Object.prototype.hasOwnProperty.call(o, k);
+  const legacy = {};
+  if(isObj(o.keys)) for(const p of PROV_IDS) if(typeof o.keys[p] === 'string' && o.keys[p].trim()) legacy[p] = o.keys[p].trim();
+  if(typeof o.apiKey === 'string' && o.apiKey.trim() && !legacy.gemini) legacy.gemini = o.apiKey.trim();
+  const models = {};
+  if(isObj(o.models)) for(const p of PROV_IDS) if(typeof o.models[p] === 'string') models[p] = o.models[p].slice(0, 200);
+  if(typeof o.model === 'string' && !models.gemini) models.gemini = o.model.slice(0, 200);
+  const rate = num(o.rate);
+  return {
+    s:{
+      provider:PROV_IDS.includes(o.provider) ? o.provider : 'gemini',
+      models,
+      rate:rate >= 0.5 && rate <= 2 ? rate : 1,
+      voiceURI:typeof o.voiceURI === 'string' ? o.voiceURI.slice(0, 500) : '',
+      showText:o.showText === true,
+      recordAudio:typeof o.recordAudio === 'boolean' ? o.recordAudio : !IS_MOBILE
+    },
+    legacy,
+    hadLegacy:own('keys') || own('apiKey')
+  };
+}
+const loaded = loadSettings();
+let settings = loaded.s;
+const saveSettings = () => LS.set('opic.settings', {provider:settings.provider, models:{...settings.models}, rate:settings.rate, voiceURI:settings.voiceURI, showText:settings.showText, recordAudio:settings.recordAudio});
+let migrated = false, migrateBlocked = false;
+const legacyKeys = loaded.legacy;
+delete loaded.legacy;
+if(loaded.hadLegacy) saveSettings(); /* 평문 키를 지운 설정으로 즉시 다시 쓴다. 키는 아래 PROVIDERS 정의 뒤에 보관함으로 옮긴다. */
+
+let state, stateReset = false;
+try{ state = cleanState(LS.get('opic.state', null)); }
+catch{ state = defaultState(); stateReset = true; try{ localStorage.removeItem('opic.state'); }catch{} }
+let saveTimer;
+const save = () => LS.set('opic.state', state);
+const saveSoon = () => { clearTimeout(saveTimer); saveTimer = setTimeout(save, 400); };
+let busy = false, lastError = '';
+
+/* ---------- AI 제공사 (Gemini · GPT · Claude) ---------- */
+const PROVIDERS = {
+  gemini:{label:'Gemini (Google)', keyUrl:'https://aistudio.google.com/apikey', keySite:'Google AI Studio',
+    keyHint:'무료 키로 시작할 수 있어요. 같은 키에 결제를 연결하면 그대로 유료 등급이 돼요. Google Cloud 콘솔에서 키의 웹사이트 제한을 https://opic-ai-tutor.github.io/* 로 걸어 두면 더 안전해요(그러면 파일로 직접 연 앱에서는 안 돼요).',
+    defModel:'gemini-flash-latest', presets:['gemini-flash-latest','gemini-flash-lite-latest'],
+    modelHint:'gemini-flash-latest는 최신 Flash, gemini-flash-lite-latest는 더 가볍고 덜 붐벼요. 붐비면 앱이 다른 Flash 모델로 자동으로 바꿔 시도해요.'},
+  openai:{label:'GPT (OpenAI)', keyUrl:'https://platform.openai.com/api-keys', keySite:'OpenAI Platform',
+    keyHint:'크레딧을 충전해야 써요. ChatGPT Plus 구독과는 별개예요.',
+    defModel:'gpt-5-mini', presets:['gpt-5-mini','gpt-5'],
+    modelHint:'mini 모델이 싸고 빨라요. 모델이 없다고 나오면 "키 확인 · 모델 목록"으로 골라 주세요.'},
+  claude:{label:'Claude (Anthropic)', keyUrl:'https://console.anthropic.com/settings/keys', keySite:'Claude Console',
+    keyHint:'크레딧을 충전해야 써요. Claude Pro/Max 구독과는 별개예요.',
+    defModel:'claude-opus-5-5', presets:['claude-opus-5-5','claude-sonnet-5-5','claude-haiku-5-5'],
+    modelHint:'1세트 대략 Opus 5.5 약 400원, Sonnet 5.5 약 200원, Haiku 5.5 약 10원이에요.'}
+};
+const API_ORIGIN = {gemini:'https://generativelanguage.googleapis.com', openai:'https://api.openai.com', claude:'https://api.anthropic.com'};
+const curKey = (p = settings.provider) => vault.get(p);
+const curModel = (p = settings.provider) => (settings.models[p] || PROVIDERS[p].defModel).trim().replace(/^models\//,'');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+class AIError extends Error{ constructor(msg, kind, status){ super(msg); this.kind = kind; this.status = status; } }
+
+/* 키 모양으로 회사를 확인한다. 한 회사의 키가 다른 회사 서버로 가지 않게 막는다. 오류 문구에 키 내용은 넣지 않는다. */
+function keyProblem(p, k){
+  k = String(k || '');
+  if(!PROV_IDS.includes(p)) return '알 수 없는 AI예요.';
+  if(!k) return `${PROVIDERS[p].label} API 키가 없어요.`;
+  if(k.length > 300 || !/^[\x21-\x7e]+$/.test(k)) return '키에 쓸 수 없는 글자가 들어 있어요. 복사한 키를 다시 확인해 주세요.';
+  const L = PROVIDERS[p].label;
+  if(p === 'gemini' && !k.startsWith('AIza')) return `${L} 키는 AIza로 시작해요. 다른 회사 키를 넣지 않았는지 확인해 주세요.`;
+  if(p === 'openai' && (!k.startsWith('sk-') || k.startsWith('sk-ant-'))) return `${L} 키는 sk-로 시작해요. sk-ant-로 시작하는 키는 Claude 키예요.`;
+  if(p === 'claude' && !k.startsWith('sk-ant-')) return `${L} 키는 sk-ant-로 시작해요. 다른 회사 키를 넣지 않았는지 확인해 주세요.`;
+  return '';
+}
+function authHeaders(p, key){
+  const bad = keyProblem(p, key);
+  if(bad) throw new AIError(bad, 'auth', 0);
+  if(p === 'gemini') return {'x-goog-api-key':key};
+  if(p === 'openai') return {'Authorization':'Bearer ' + key};
+  return {'x-api-key':key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true'};
+}
+/* 예전 평문 키 옮기기: 회사와 모양이 맞는 키만 메모리 보관함으로. 서비스 워커가 붙어 있으면 받지 않는다. */
+if(Object.keys(legacyKeys).length){
+  if(swControlled()) migrateBlocked = true;
+  else for(const p of PROV_IDS) if(legacyKeys[p] && !keyProblem(p, legacyKeys[p])){ vault.set(p, legacyKeys[p]).catch(() => {}); migrated = true; }
+  for(const p of PROV_IDS) delete legacyKeys[p];
+}
+
+/* 키가 실린 요청은 모두 여기를 지난다. 그 회사의 주소가 아니면 보내지 않는다. */
+function apiFetch(p, url, init){
+  if(swControlled()) throw new AIError(SW_MSG, 'blocked', 0);
+  if(new URL(url).origin !== API_ORIGIN[p]) throw new AIError('허용되지 않은 주소로는 키를 보내지 않아요.', 'blocked', 0);
+  return nativeFetch(url, {...init, credentials:'omit', referrerPolicy:'strict-origin', cache:'no-store'});
+}
+
+/* Gemini 스키마(대문자 타입)를 OpenAI·Claude용 JSON Schema로 바꾼다 */
+function toJsonSchema(s){
+  const t = s.type.toLowerCase(), o = {type:t};
+  if(s.enum) o.enum = s.enum;
+  if(t === 'object'){
+    o.properties = {};
+    for(const [k, v] of Object.entries(s.properties)) o.properties[k] = toJsonSchema(v);
+    o.required = Object.keys(s.properties);
+    o.additionalProperties = false;
+  }
+  if(t === 'array') o.items = toJsonSchema(s.items);
+  return o;
+}
+
+async function listModels(p, key){
+  let r;
+  try{
+    const h = authHeaders(p, key);
+    if(p === 'gemini') r = await apiFetch(p, 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', {headers:h});
+    if(p === 'openai') r = await apiFetch(p, 'https://api.openai.com/v1/models', {headers:h});
+    if(p === 'claude') r = await apiFetch(p, 'https://api.anthropic.com/v1/models?limit=100', {headers:h});
+  }catch(e){
+    if(e instanceof AIError) return {ok:false, status:0, msg:e.message, list:[]};
+    return {ok:false, status:0, msg:'인터넷 연결이나 브라우저 보안 설정 때문에 접속하지 못했어요.', list:[]};
+  }
+  let data = {}; try{ data = await r.json(); }catch{}
+  if(!isObj(data)) data = {};
+  if(!r.ok) return {ok:false, status:r.status, msg:str(data.error?.message, 300), list:[]};
+  let list = [];
+  if(p === 'gemini') list = (Array.isArray(data.models) ? data.models : [])
+    .filter(m => isObj(m) && typeof m.name === 'string' && (Array.isArray(m.supportedGenerationMethods) ? m.supportedGenerationMethods : []).includes('generateContent') && /gemini/i.test(m.name) && !/embedding|tts|image|audio|live|vision/i.test(m.name))
+    .map(m => m.name.replace(/^models\//,''));
+  if(p === 'openai') list = (Array.isArray(data.data) ? data.data : []).map(m => str(m?.id, 200))
+    .filter(id => /^(gpt-|o\d)/.test(id) && !/audio|realtime|tts|image|transcribe|search|instruct|codex|embedding|moderation|chat-latest|\d{4}-\d{2}-\d{2}/.test(id));
+  if(p === 'claude') list = (Array.isArray(data.data) ? data.data : []).map(m => str(m?.id, 200)).filter(Boolean);
+  return {ok:true, status:r.status, msg:'', list};
+}
+
+/* 붐비거나 모델이 없을 때 차례로 시도할 다른 모델 */
+function fallbackModels(p, list, current){
+  const ver = n => parseFloat((n.match(/(?:gemini|gpt)-(\d+(?:\.\d+)?)/) || [])[1] || 0);
+  const byVer = (a, b) => ver(b) - ver(a) || a.length - b.length;
+  let out = [];
+  if(p === 'gemini'){
+    const ok = list.filter(n => /flash/i.test(n) && !/exp|preview|thinking/i.test(n));
+    out = [...ok.filter(n => !/lite/.test(n)).sort(byVer), 'gemini-flash-lite-latest', ...ok.filter(n => /lite/.test(n)).sort(byVer)];
+  }
+  if(p === 'openai'){
+    const ok = list.filter(n => /^gpt-/.test(n));
+    out = [...ok.filter(n => /mini/.test(n) && !/nano/.test(n)).sort(byVer), ...ok.filter(n => !/mini|nano/.test(n)).sort(byVer)];
+  }
+  if(p === 'claude'){
+    const pref = ['claude-sonnet-5-5','claude-opus-5-5','claude-haiku-5-5'];
+    out = list.length ? pref.filter(m => list.includes(m)) : pref;
+  }
+  return [...new Set(out)].filter(m => m !== current);
+}
+
+function kindOf(status){
+  if(status === 404) return 'notfound';
+  if(status === 429) return 'quota';
+  if(status === 401 || status === 403) return 'auth';
+  if(status >= 500 || status === 529) return 'busy';
+  return 'other';
+}
+function errorText(p, model, status, msg){
+  const name = PROVIDERS[p].label;
+  if(status === 404) return `모델 "${model}"을 찾지 못했어요. 설정에서 "키 확인 · 모델 목록"으로 다른 모델을 골라 주세요.`;
+  if(status === 401 || (status === 400 && /api.?key/i.test(msg))) return `${name} API 키가 올바르지 않아요. 설정에서 다시 넣어 주세요.`;
+  if(status === 403) return `${name} 키 권한 오류예요. 키를 만든 곳에서 다시 확인해 주세요. (${msg})`;
+  if(status === 429){
+    if(p === 'gemini') return `무료 사용 한도를 넘었어요 (${model}). 1분쯤 뒤에 다시 하거나 다른 모델을 골라 보세요. 하루 한도라면 내일 다시 해 주세요.`;
+    if(/quota|billing|credit/i.test(msg)) return `${name} 크레딧이 없거나 사용 한도에 걸렸어요. 결제 페이지에서 크레딧을 확인해 주세요.`;
+    return `${name} 요청이 너무 잦아요. 1분쯤 뒤에 다시 해 주세요.`;
+  }
+  if(status === 400 && /credit balance/i.test(msg)) return `${name} 크레딧이 부족해요. Claude Console에서 충전해 주세요.`;
+  if(status >= 500 || status === 529) return `${name} 서버가 붐벼요 (${model}). 잠시 후 다시 시도해 주세요.`;
+  return `${name} 오류 (${status}): ${msg || '알 수 없는 오류'}`;
+}
+
+/* 한 모델에 한 번 요청. 서버가 붐비면 같은 모델로 한 번만 더 시도 */
+async function callModel(p, model, system, user, schema, temperature){
+  for(let attempt = 0; ; attempt++){
+    let res;
+    try{ res = await sendRequest(p, model, curKey(p), system, user, schema, temperature); }
+    catch(e){
+      if(e instanceof AIError) throw e;
+      if(attempt < 1){ await sleep(1500); continue; }
+      throw new AIError('인터넷 연결을 확인해 주세요. 회사망이라면 보안 프로그램이 막고 있을 수도 있어요.', 'network', 0);
+    }
+    if(res.ok) return parseResponse(p, await res.json());
+    let msg = ''; try{ const j = await res.json(); msg = str(j?.error?.message, 300); }catch{}
+    const kind = kindOf(res.status);
+    if(kind === 'busy' && attempt < 1){ await sleep(2000); continue; }
+    throw new AIError(errorText(p, model, res.status, msg), kind, res.status);
+  }
+}
+
+function sendRequest(p, model, key, system, user, schema, temperature){
+  const auth = authHeaders(p, key);
+  if(p === 'gemini'){
+    return apiFetch(p, `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method:'POST', headers:{'Content-Type':'application/json', ...auth},
+      body:JSON.stringify({
+        systemInstruction:{parts:[{text:system}]},
+        contents:[{role:'user', parts:[{text:user}]}],
+        generationConfig:{temperature, responseMimeType:'application/json', responseSchema:schema}
+      })
+    });
+  }
+  if(p === 'openai'){
+    return apiFetch(p, 'https://api.openai.com/v1/chat/completions', {
+      method:'POST', headers:{'Content-Type':'application/json', ...auth},
+      body:JSON.stringify({
+        model,
+        messages:[{role:'system', content:system}, {role:'user', content:user}],
+        response_format:{type:'json_schema', json_schema:{name:'opic_result', strict:true, schema:toJsonSchema(schema)}}
+      })
+    });
+  }
+  if(p === 'claude'){
+    const headers = {'Content-Type':'application/json', ...auth};
+    const body = {
+      model, max_tokens:16000, system,
+      messages:[{role:'user', content:user}],
+      output_config:{format:{type:'json_schema', schema:toJsonSchema(schema)}}
+    };
+    if(/^claude-(opus|sonnet|haiku|fable)-5/.test(model)) body.output_config.effort = 'medium';
+    if(/^claude-(opus-5-5|sonnet-5-5)$/.test(model)){ body.fallbacks = 'default'; headers['anthropic-beta'] = 'server-side-fallback-2026-07-01'; }
+    return apiFetch(p, 'https://api.anthropic.com/v1/messages', {method:'POST', headers, body:JSON.stringify(body)});
+  }
+  throw new AIError('알 수 없는 AI예요.', 'other', 0);
+}
+
+function parseResponse(p, data){
+  let text = '', why = '';
+  if(p === 'gemini'){
+    const cand = data.candidates?.[0];
+    text = (cand?.content?.parts || []).filter(x => !x.thought).map(x => x.text || '').join('');
+    why = cand?.finishReason || data.promptFeedback?.blockReason || '';
+  }
+  if(p === 'openai'){
+    const m = data.choices?.[0]?.message;
+    if(m?.refusal) throw new AIError('GPT가 이 요청에 답하지 않았어요. 설문 내용을 조금 바꿔 다시 시도해 주세요.', 'refusal', 200);
+    text = m?.content || ''; why = data.choices?.[0]?.finish_reason || '';
+  }
+  if(p === 'claude'){
+    if(data.stop_reason === 'refusal') throw new AIError('Claude가 이 요청에 답하지 않았어요. 설문 내용을 조금 바꿔 다시 시도해 주세요.', 'refusal', 200);
+    if(data.stop_reason === 'max_tokens') throw new AIError('답이 너무 길어 중간에 끊겼어요. 다시 시도해 주세요.', 'other', 200);
+    text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+    why = data.stop_reason || '';
+  }
+  if(!text) throw new AIError(`답을 받지 못했어요 (${str(why, 60) || '빈 응답'}). 다시 시도해 주세요.`, 'other', 200);
+  try{ return JSON.parse(text); }catch{ throw new AIError('답 형식이 깨졌어요. 다시 시도해 주세요.', 'other', 200); }
+}
+
+/* 키를 쓸 수 있는지 확인하고, 없으면 잠금 해제 창이나 설정 창을 연다 */
+function ensureKey(){
+  const p = settings.provider;
+  if(swControlled()){ toast(SW_MSG, 12000); return false; }
+  if(vault.has(p)) return true;
+  if(vault.isLocked()){ openUnlock(); toast('저장된 키가 잠겨 있어요. 비밀번호를 넣어 잠금을 풀어 주세요.'); return false; }
+  openSettings(); toast(`먼저 설정에서 ${PROVIDERS[p].label} API 키를 넣어 주세요.`); return false;
+}
+
+/* 앱이 부르는 함수: 고른 모델로 시도하고, 붐비거나 없으면 다른 모델을 차례로 시도 */
+async function ai(system, user, schema, temperature = 0.9){
+  const p = settings.provider;
+  if(swControlled()) throw new AIError(SW_MSG, 'blocked', 0);
+  if(!vault.has(p)) throw new AIError(vault.isLocked() ? '키가 잠겨 있어요. 잠금을 풀고 다시 시도해 주세요.' : `먼저 설정에서 ${PROVIDERS[p].label} API 키를 넣어 주세요.`, 'nokey', 0);
+  const first = curModel(p);
+  try{ return await callModel(p, first, system, user, schema, temperature); }
+  catch(e){
+    const chainable = e.kind === 'busy' || e.kind === 'notfound' || (p === 'gemini' && e.kind === 'quota');
+    if(!chainable) throw e;
+    const {list} = await listModels(p, curKey(p));
+    const alts = fallbackModels(p, list, first).slice(0, 3);
+    let last = e;
+    for(const m of alts){
+      const why = last.kind === 'notfound' ? '없어서' : last.kind === 'quota' ? '한도에 걸려서' : '붐벼서';
+      toast(`모델이 ${why} "${m}"(으)로 다시 시도해요.`, 6000);
+      await sleep(1200);
+      try{
+        const out = await callModel(p, m, system, user, schema, temperature);
+        if(e.kind === 'notfound'){ settings.models[p] = m; saveSettings(); }
+        return out;
+      }catch(e2){
+        last = e2;
+        if(!(e2.kind === 'busy' || e2.kind === 'notfound' || (p === 'gemini' && e2.kind === 'quota'))) throw e2;
+      }
+    }
+    throw new AIError(last.message + (alts.length ? ` (다른 모델 ${alts.length}개도 시도했어요.)` : ''), last.kind, last.status);
+  }
+}
+
+const GEN_SYSTEM = `당신은 OPIc 방식의 영어 말하기 연습 세트를 만드는 출제자입니다. 사용자는 OPIc AL, 외국계 회사 이직, 미국 석박사 과정을 준비하는 성인입니다. 지정된 JSON으로만 답합니다.
+
+[난이도 기준]
+1단계 아주 쉬움: 짧은 질문과 단순한 어휘. 한두 문장 답변으로 시작할 수 있다.
+2단계 쉬움: 일상 소재와 단순 문장, 이유 한 가지를 요구한다.
+3단계 보통: 연결된 문장과 이유, 예시를 요구한다.
+4단계 약간 어려움: 짧은 문단과 약간의 시제 전환, 예상 밖 소재를 섞는다.
+5단계 어려움: 문단 길이의 서술, 과거 현재 미래 전환, 2~3개의 조건, 추상적 주제를 포함한다.
+6단계: 5단계에 세부 조건을 더하고 긴 질문, 가정 상황, 의견 방어를 요구한다.
+실제 OPIc은 난이도 1~2가 12문제지만 연습에서는 15문제를 유지하고 질문을 쉽게 만든다.
+
+[구성: 맞춤형] 총 15문제, 5개 세트, 세트별 문항 수는 정확히 4, 4, 2, 2, 3.
+세트 1: 일상 주제의 연결 질문 4개. Describe, Routine, Comparison, Past experience 순서.
+세트 2: 업무나 학업 주제의 연결 질문 4개. 같은 순서.
+세트 3: 일상 롤플레이 2개. 첫 질문은 주어진 상황에서 상대에게 질문하기, 둘째 질문은 문제가 생긴 상황에서 대안 2~3개 제시하기. 둘 다 Role-play.
+세트 4: 업무나 학업 롤플레이 2개. 같은 방식.
+세트 5: 상식, 사회, 개인 의견을 묻는 연결 질문 3개. 현황 설명(Describe), 과거와 현재 비교나 원인과 영향(Comparison), 의견과 이유 방어(Opinion) 순서로 점점 깊어진다.
+
+[구성: 실전형] 실제 OPIc 순서. 총 15문제, 6개 세트, 세트별 문항 수는 정확히 1, 3, 3, 3, 3, 2.
+세트 1: 자기소개 1개(Introduction).
+세트 2: 설문 주제 세트. Describe, Routine, Past experience.
+세트 3: 두 번째 설문 주제 세트. 같은 순서.
+세트 4: 설문에 없던 일반 주제의 돌발 세트. Describe, Comparison, Past experience.
+세트 5: 롤플레이. 상황에 맞게 질문하기(Role-play), 문제 해결 대안(Role-play), 비슷한 과거 경험(Past experience).
+세트 6: 어드밴스 2개. 난이도 5~6이면 조건이 많고 긴 복합 질문(Advanced). 난이도 3~4이면 같은 형식의 일반 질문 2개(Comparison, Opinion 등)로 대체한다.
+
+[연결 규칙]
+같은 세트의 질문은 하나의 주제와 상황을 공유하고, 뒤 질문은 앞 질문에서 말했을 법한 내용을 자연스럽게 이어받는다. 세트가 바뀌면 주제도 바뀐다.
+설문에서 알 수 없는 사실을 사용자의 실제 경험처럼 단정하지 않는다. 설문에서 "패스"인 항목은 소재로 쓰지 않는다.
+같은 질문을 반복하지 않는다. "이미 낸 질문" 목록이 있으면 설문 범위 안에서 소재와 각도를 바꾼다.
+
+[질문 형식]
+시험관이 말하듯 자연스러운 구어체 영어로 쓰고, 난이도에 따라 길이와 조건의 수를 조절한다. 질문 안에 번호나 태그를 넣지 않는다. 모범 답안, 힌트, 번역은 넣지 않는다.
+
+[JSON 필드]
+summary: 설문으로 파악한 사용자 정보를 한국어 3줄 이내로. 배열 원소 하나가 한 줄. 설문에 없는 내용은 추측하지 않는다.
+sets[].name: 짧은 한국어 세트 이름. 예: "일상 · 주말 러닝", "업무 롤플레이 · 해외 협력사 회의".
+sets[].guide: 한국어 한 문장 안내. 경험이 없을 수 있는 소재면 "경험이 없으면 그럴듯하게 지어내도 돼요."를 넣는다.
+sets[].questions[].type: 유형 태그. sets[].questions[].text: 영어 질문.
+한국어 문장에서 대시(—)는 쓰지 않고, 기술 고유명사는 영문 그대로 쓴다.`;
+
+const GEN_SCHEMA = {
+  type:'OBJECT',
+  properties:{
+    summary:{type:'ARRAY', items:{type:'STRING'}},
+    sets:{type:'ARRAY', items:{type:'OBJECT', properties:{
+      name:{type:'STRING'}, guide:{type:'STRING'},
+      questions:{type:'ARRAY', items:{type:'OBJECT', properties:{
+        type:{type:'STRING', enum:TYPES}, text:{type:'STRING'}
+      }, required:['type','text']}}
+    }, required:['name','guide','questions']}}
+  },
+  required:['summary','sets']
+};
+
+const FB_SYSTEM = `당신은 OPIc 말하기 코치입니다. 사용자가 한 세트의 질문과 답변 전사본을 주면 지정된 JSON으로만 피드백합니다. 사용자는 OPIc AL, 외국계 회사 이직, 미국 석박사 과정을 준비하는 성인입니다.
+
+[규칙]
+items: 우선순위가 높은 것부터 최대 7개 내외. category는 문법, 표현, 어휘, 업무 문장 중 하나. "업무 문장"은 업무나 학업 상황에서 더 프로페셔널하게 말할 수 있는 문장이다.
+original: 전사본에 실제로 있는 부분을 한 글자도 바꾸지 않고 그대로 복사한다. 없는 문장을 만들거나 다듬어서 인용하지 않는다.
+corrected: 자연스러운 영어로 고친 문장. reason: 왜 고쳤는지 한국어 한 줄. anki: 외워 둘 가치가 있으면 true.
+전사본은 음성 인식 결과라 구두점과 대소문자가 없거나 인식 오류가 있을 수 있다. 구두점, 대소문자, 명백한 인식 오류는 지적하지 않는다.
+checks: relevance(질문에 맞게 답했는지), tense(시제가 맞는지), coherence(세트 안에서 내용이 이어지는지), length(문항별 분량이 1~2분, 대략 120~250단어에 맞는지. 주어진 단어 수를 근거로) 각각 한국어 한 줄.
+scope_note: 답변이 비어 있거나 너무 짧아 확인하지 못한 문항이 있으면 그 범위를 한국어로 밝힌다. 없으면 빈 문자열.
+next_focus: 다음 세트에서 의식할 점 한 가지를 한국어 한 문장으로.
+발음과 억양은 평가하지 않는다. 모범 답안 전체를 써 주지 않는다.
+한국어 문장에서 대시(—)는 쓰지 않고, 기술 고유명사는 영문 그대로 쓴다.`;
+
+const FB_SCHEMA = {
+  type:'OBJECT',
+  properties:{
+    items:{type:'ARRAY', items:{type:'OBJECT', properties:{
+      category:{type:'STRING', enum:CATS}, original:{type:'STRING'}, corrected:{type:'STRING'},
+      reason:{type:'STRING'}, anki:{type:'BOOLEAN'}
+    }, required:['category','original','corrected','reason','anki']}},
+    checks:{type:'OBJECT', properties:{
+      relevance:{type:'STRING'}, tense:{type:'STRING'}, coherence:{type:'STRING'}, length:{type:'STRING'}
+    }, required:['relevance','tense','coherence','length']},
+    scope_note:{type:'STRING'},
+    next_focus:{type:'STRING'}
+  },
+  required:['items','checks','scope_note','next_focus']
+};
+
+/* ---------- 출제 ---------- */
+function surveyText(){
+  return SURVEY.map(f => `- ${f.label}: ${(state.survey[f.k] || '').trim() || '패스'}`).join('\n');
+}
+function shapeOk(sets){
+  const want = SET_SHAPE[state.mode];
+  return Array.isArray(sets) && sets.length === want.length && sets.every((s,i) => Array.isArray(s?.questions) && s.questions.length === want[i]);
+}
+async function generate(){
+  if(busy) return;
+  if(!ensureKey()) return;
+  busy = true; stopEverything();
+  const lvl = state.level, mode = state.mode;
+  renderLoading('문제를 만들고 있어요. 10~40초쯤 걸려요.');
+  const used = state.used.slice(-80);
+  const user = `난이도: ${lvl}단계
+구성: ${MODES[mode]} (세트별 문항 수 ${SET_SHAPE[mode].join(', ')})
+
+[설문]
+${surveyText()}
+
+[이미 낸 질문: 겹치지 않게]
+${used.length ? used.map(q => '- ' + q).join('\n') : '(없음)'}`;
+  try{
+    let out = await ai(GEN_SYSTEM, user, GEN_SCHEMA, 1.0);
+    if(!isObj(out) || !shapeOk(out.sets)){
+      out = await ai(GEN_SYSTEM, user + `\n\n[주의] 세트 수와 세트별 문항 수를 정확히 ${SET_SHAPE[mode].join(', ')}로 맞춰야 한다.`, GEN_SCHEMA, 0.8);
+    }
+    if(!isObj(out)) throw new Error('문제를 받지 못했어요. 다시 시도해 주세요.');
+    let no = 0;
+    const rawSets = (Array.isArray(out.sets) ? out.sets : []).filter(s => isObj(s) && Array.isArray(s.questions) && s.questions.length);
+    if(!rawSets.length) throw new Error('문제를 받지 못했어요. 다시 시도해 주세요.');
+    let session;
+    try{
+      session = cleanSession({
+        date:today(), level:lvl, mode, title:`${today()} 말하기 세트 난이도${lvl}`, summary:out.summary,
+        sets:rawSets.map(s => ({name:s.name, guide:s.guide, feedback:null,
+          questions:s.questions.filter(isObj).map(q => ({no:++no, type:q.type, text:q.text, answer:'', seconds:0, plays:0}))}))
+      });
+    }catch{ throw new Error('AI 답의 형식이 올바르지 않아요. 다시 시도해 주세요.'); }
+    if(no !== 15) toast(`이번 세트는 ${no}문제로 나왔어요. 원하면 "새세트"로 다시 만들 수 있어요.`, 6000);
+    state.session = session;
+    state.used = [...state.used, ...session.sets.flatMap(s => s.questions.map(q => q.text))].slice(-150);
+    state.pos = {s:0, q:0};
+    state.view = 'overview';
+  }catch(e){
+    lastError = e.message;
+    state.view = state.session ? 'overview' : 'survey';
+  }finally{
+    busy = false; save(); render();
+  }
+}
+
+/* ---------- 피드백 ---------- */
+async function requestFeedback(si){
+  if(busy) return;
+  const set = state.session.sets[si];
+  if(!set.questions.some(q => words(q.answer) > 0)){ toast('이 세트에 답변이 아직 없어요. 녹음하거나 전사본을 붙여 넣어 주세요.'); return; }
+  if(!ensureKey()) return;
+  busy = true; stopEverything();
+  const box = $('#fbArea');
+  if(box) box.innerHTML = `<div class="card loading"><div class="spinner"></div>피드백을 정리하고 있어요.</div>`;
+  const user = `난이도: ${state.session.level}단계 / 구성: ${MODES[state.session.mode]}
+세트: ${set.name}
+
+` + set.questions.map(q => `[문항 ${q.no}] (${q.type})
+Q: ${q.text}
+전사본 (${words(q.answer)} words, ${mmss(q.seconds||0)}):
+${q.answer.trim() || '(답변 없음)'}`).join('\n\n');
+  try{
+    const raw = await ai(FB_SYSTEM, user, FB_SCHEMA, 0.4);
+    let fb;
+    try{ fb = cleanFeedback(isObj(raw) ? {...raw, at:new Date().toISOString()} : badShape()); }
+    catch{ throw new Error('AI 답의 형식이 올바르지 않아요. 다시 시도해 주세요.'); }
+    const all = norm(set.questions.map(q => q.answer).join(' \n '));
+    fb.items.forEach(it => { it.verified = !!norm(it.original) && all.includes(norm(it.original)); });
+    set.feedback = fb;
+    save();
+  }catch(e){ toast(e.message, 7000); }
+  finally{ busy = false; render(); }
+}
+
+/* ---------- 음성: 읽어 주기 ---------- */
+let voices = [];
+function loadVoices(){
+  voices = (speechSynthesis.getVoices() || []).filter(v => /^en[-_]/i.test(v.lang));
+  const sel = $('#sVoice'); if(!sel) return;
+  const cur = pickVoice();
+  sel.innerHTML = voices.length ? voices.map(v => `<option value="${esc(v.voiceURI)}" ${cur && v.voiceURI === cur.voiceURI ? 'selected' : ''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('') : '<option value="">영어 음성을 찾지 못했어요</option>';
+}
+function pickVoice(){
+  return voices.find(v => v.voiceURI === settings.voiceURI)
+    || voices.find(v => /en-US/i.test(v.lang) && /Natural|Google US English|Aria|Jenny|Samantha|Ava/i.test(v.name))
+    || voices.find(v => /en-US/i.test(v.lang)) || voices[0] || null;
+}
+function speak(text, onend){
+  if(!('speechSynthesis' in window)){ toast('이 브라우저는 읽어 주기를 지원하지 않아요.'); return; }
+  speechSynthesis.cancel();
+  const parts = (String(text).match(/[^.!?]+[.!?]+["')]*\s*|[^.!?]+$/g) || [text]).map(p => p.trim()).filter(Boolean);
+  const v = pickVoice();
+  parts.forEach((p, i) => {
+    const u = new SpeechSynthesisUtterance(p);
+    if(v){ u.voice = v; u.lang = v.lang; } else u.lang = 'en-US';
+    u.rate = settings.rate;
+    if(i === parts.length - 1 && onend) u.onend = onend;
+    speechSynthesis.speak(u);
+  });
+}
+if('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+
+/* ---------- 음성: 받아 적기 + 녹음 ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const audioUrls = {};
+let rec = null, recording = false, committed = '', sessionFinal = '', recQ = null;
+let timerId = null, startAt = 0, baseSec = 0, mediaRec = null, stream = null, chunks = [];
+
+async function startRecording(q, key){
+  if(recording) return;
+  speechSynthesis.cancel();
+  recording = true; recQ = q;
+  const ta = $('#ans');
+  committed = q.answer.trim() ? q.answer.trim() + ' ' : '';
+  sessionFinal = '';
+  ta.readOnly = true;
+  baseSec = q.seconds || 0; startAt = Date.now();
+  timerId = setInterval(() => tick(q), 250); tick(q);
+  setRecButton(true);
+  if(settings.recordAudio) try{
+    stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    if(!recording){ stream.getTracks().forEach(t => t.stop()); return; }
+    chunks = [];
+    mediaRec = new MediaRecorder(stream);
+    const mr = mediaRec, st = stream;
+    mr.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+    mr.onstop = () => {
+      const blob = new Blob(chunks, {type: mr.mimeType || 'audio/webm'});
+      if(audioUrls[key]) URL.revokeObjectURL(audioUrls[key]);
+      audioUrls[key] = URL.createObjectURL(blob);
+      st.getTracks().forEach(t => t.stop());
+      renderAudio(key);
+    };
+    mr.start();
+  }catch(e){
+    toast('마이크를 쓸 수 없어요. 주소창 왼쪽 아이콘에서 마이크를 허용해 주세요.', 6000);
+  }
+  if(SR) startSR(q);
+  else toast('이 브라우저는 음성 인식을 지원하지 않아요. Chrome이나 Edge를 쓰거나, 답변을 직접 입력해 주세요.', 6000);
+}
+function startSR(q){
+  const r = new SR(); rec = r;
+  r.lang = 'en-US'; r.continuous = true; r.interimResults = true;
+  sessionFinal = '';
+  r.onresult = e => {
+    let fin = '', inter = '';
+    for(let i = 0; i < e.results.length; i++){ const x = e.results[i]; if(x.isFinal) fin += x[0].transcript + ' '; else inter += x[0].transcript; }
+    sessionFinal = fin;
+    q.answer = (committed + fin).replace(/\s+/g,' ').trim();
+    const ta = $('#ans');
+    if(ta && recQ === q){ ta.value = (committed + fin + inter).replace(/\s+/g,' ').trimStart(); updateWC(ta.value); }
+  };
+  r.onerror = e => {
+    if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){ toast('음성 인식 권한이 막혀 있어요. 주소창 왼쪽 아이콘에서 마이크를 허용해 주세요.', 6000); stopRecording(); }
+    else if(e.error === 'network'){ toast('음성 인식은 인터넷 연결이 필요해요.', 5000); }
+  };
+  r.onend = () => {
+    committed = (committed + sessionFinal).replace(/\s+/g,' ').trim();
+    committed = committed ? committed + ' ' : '';
+    sessionFinal = '';
+    if(recording && recQ === q){ try{ startSR(q); }catch{} return; }
+    q.answer = committed.trim();
+    const ta = $('#ans');
+    if(ta && state.view === 'practice' && curQ() === q){ ta.value = q.answer; ta.readOnly = false; updateWC(q.answer); }
+    rec = null; save();
+  };
+  try{ r.start(); }catch{}
+}
+function stopRecording(){
+  if(!recording) return;
+  recording = false;
+  clearInterval(timerId);
+  if(recQ) recQ.seconds = baseSec + Math.round((Date.now() - startAt) / 1000);
+  if(mediaRec && mediaRec.state !== 'inactive'){ try{ mediaRec.stop(); }catch{} }
+  mediaRec = null;
+  if(rec){ try{ rec.stop(); }catch{} }
+  else { const ta = $('#ans'); if(ta) ta.readOnly = false; }
+  setRecButton(false);
+  save();
+}
+function stopEverything(){ stopRecording(); if('speechSynthesis' in window) speechSynthesis.cancel(); }
+function tick(q){
+  const s = baseSec + Math.round((Date.now() - startAt) / 1000);
+  const t = $('#timer'); if(!t) return;
+  t.textContent = mmss(s);
+  t.className = 'timer' + (s >= 150 ? ' over' : s >= 60 ? ' ok' : '');
+  const b = $('#barfill'); if(b) b.style.width = Math.min(100, s / 120 * 100) + '%';
+}
+function setRecButton(on){
+  const b = $('#rec'); if(!b) return;
+  b.classList.toggle('on', on);
+  b.textContent = on ? '■ 답변 끝내기' : (curQ()?.answer.trim() ? '● 이어서 말하기' : '● 답변 시작');
+}
+function updateWC(text){
+  const n = words(text), el = $('#wc'); if(!el) return;
+  el.textContent = `${n} words (목표 120~250)`;
+  el.className = 'wc ' + (n > 250 ? 'over' : n >= 120 ? 'ok' : 'low');
+}
+function renderAudio(key){
+  const box = $('#audioBox');
+  if(box && box.dataset.key === key) box.innerHTML = audioUrls[key] ? `<audio controls src="${esc(audioUrls[key])}"></audio><div class="muted sm">내 녹음이에요. 발음과 억양은 AI가 평가하지 않으니 직접 들어 보세요. 새로고침하면 사라져요.</div>` : '';
+}
+
+/* ---------- 화면 ---------- */
+const curSet = () => state.session?.sets[state.pos.s];
+const curQ = () => curSet()?.questions[state.pos.q];
+
+function render(){
+  const app = $('#app');
+  const v = state.view;
+  if(v === 'level') app.innerHTML = viewLevel();
+  else if(v === 'survey') app.innerHTML = viewSurvey();
+  else if(v === 'overview' && state.session) app.innerHTML = viewOverview();
+  else if(v === 'practice' && curQ()) app.innerHTML = viewPractice();
+  else { state.view = 'level'; app.innerHTML = viewLevel(); }
+  if(lastError){
+    app.insertAdjacentHTML('afterbegin', `<div class="warnbox" style="margin-bottom:14px;background:var(--bad-soft)"><b>문제를 만들지 못했어요</b><br>${esc(lastError)}<div class="row" style="margin-top:6px"><button class="small" data-cmd="settings">설정 열기</button><button class="small" id="errClose">닫기</button></div></div>`);
+    $('#errClose').onclick = () => { lastError = ''; $('#errClose').closest('.warnbox').remove(); };
+  }
+  if(swControlled()) app.insertAdjacentHTML('afterbegin', `<div class="badbox" style="margin-bottom:14px">${esc(SW_MSG)}</div>`);
+  bind();
+  window.scrollTo({top:0});
+}
+function renderLoading(msg){ $('#app').innerHTML = `<div class="card loading"><div class="spinner"></div>${esc(msg)}</div>`; }
+
+function keyBanner(){
+  if(vault.has(settings.provider)) return '';
+  if(vault.isLocked()) return `<div class="warnbox" style="margin-bottom:14px">이 기기에 비밀번호로 잠가 둔 키가 있어요. <button class="link" data-cmd="unlock">잠금 해제</button>하면 바로 쓸 수 있어요.</div>`;
+  return `<div class="warnbox" style="margin-bottom:14px">시작하기 전에 <button class="link" data-cmd="settings">설정</button>에서 AI를 고르고 API 키를 넣어 주세요. Gemini는 무료 키로 시작할 수 있어요.</div>`;
+}
+
+function viewLevel(){
+  const lv = state.level, low = lv && lv <= 2;
+  return keyBanner() + `<section class="card">
+    <h2>1. 난이도와 구성 고르기</h2>
+    <p class="muted sm">질문은 영어로, 안내는 한국어로 나와요. 요청하기 전에는 모범 답안, 힌트, 번역을 보여 주지 않아요.</p>
+    ${LEVELS.map(l => `<label class="opt"><input type="radio" name="level" value="${num(l.n)}" ${lv === l.n ? 'checked' : ''}><div><b>${num(l.n)}단계 ${esc(l.name)}</b><span>${esc(l.desc)}</span></div></label>`).join('')}
+    <h3>구성</h3>
+    <label class="opt"><input type="radio" name="mode" value="custom" ${state.mode === 'custom' || low ? 'checked' : ''}><div><b>1 맞춤형</b><span>5세트 15문제. 일상 4, 업무나 학업 4, 일상 롤플레이 2, 업무나 학업 롤플레이 2, 사회와 의견 3</span></div></label>
+    <label class="opt"><input type="radio" name="mode" value="real" ${state.mode === 'real' && !low ? 'checked' : ''} ${low ? 'disabled' : ''}><div><b>2 실전형</b><span>실제 OPIc 순서. 자기소개, 설문 주제 2세트, 돌발, 롤플레이, 어드밴스</span></div></label>
+    <p class="note" id="modeNote" ${low ? '' : 'hidden'}>난이도 1~2는 맞춤형으로 진행해요. 실제 OPIc은 12문제지만 연습에서는 15문제를 유지하고 질문을 쉽게 만들어요.</p>
+    <div class="row end"><button class="primary" id="levelNext">${state.surveyDone ? '이 난이도로 문제 만들기' : '다음: 설문'}</button></div>
+  </section>`;
+}
+
+function viewSurvey(){
+  return keyBanner() + `<section class="card">
+    <h2>2. 설문조사</h2>
+    <div class="warnbox">회사 기밀(고객사명, IP, 설정 원본)은 적지 마세요. 설문과 답변은 고른 AI 회사로 보내지고, Gemini 무료 키로 보낸 내용은 Google 서비스 개선에 쓰일 수 있어요.</div>
+    <p class="muted sm">모르거나 건너뛰고 싶은 항목은 비워 두거나 "패스"라고 적으면 돼요.</p>
+    ${SURVEY.map(f => `<div class="field"><label for="sv_${esc(f.k)}">${esc(f.label)}</label>${f.hint ? `<small>${esc(f.hint)}</small>` : ''}<textarea id="sv_${esc(f.k)}" rows="2" placeholder="${esc(f.ph)}">${esc(state.survey[f.k] || '')}</textarea></div>`).join('')}
+    <div class="spread"><button id="surveyBack">← 난이도</button><button class="primary" id="surveyGo">문제 만들기</button></div>
+  </section>`;
+}
+
+function viewOverview(){
+  const S = state.session;
+  const answered = s => s.questions.filter(q => words(q.answer) > 0).length;
+  const ankiN = S.sets.reduce((n, s) => n + (s.feedback?.items || []).filter(i => i.anki).length, 0);
+  const started = S.sets.some(s => answered(s) > 0);
+  return `<section class="card">
+    <h2>${esc(S.title)}</h2>
+    <p class="muted sm">${esc(MODES[S.mode])} · 15문제 · 문항당 1~2분 답변</p>
+    <h3>설문으로 파악한 내용</h3>
+    <ul>${S.summary.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
+    <p class="sm muted">틀린 내용이 있으면 <button class="link" data-cmd="survey">설문수정</button>으로 고칠 수 있어요.</p>
+    <div class="row end"><button class="primary" id="startBtn">${started ? '이어서 하기' : '1번 문항부터 시작'}</button></div>
+  </section>
+  <section class="card">
+    <h3 style="margin-top:0">세트</h3>
+    <ul class="setlist">${S.sets.map((s, i) => `<li>
+      <div class="spread"><b>세트 ${num(i+1)}. ${esc(s.name)}</b><span class="chip ${answered(s) === s.questions.length ? 'ok' : 'gray'}">답변 ${num(answered(s))}/${num(s.questions.length)}</span></div>
+      <div>${s.questions.map(q => `<span class="chip">${num(q.no)}. ${esc(q.type)}</span>`).join('')}</div>
+      <div class="row" style="margin-top:8px">
+        <button class="small" data-goset="${num(i)}">연습하기</button>
+        <button class="small" data-fb="${num(i)}" ${answered(s) ? '' : 'disabled'}>${s.feedback ? '피드백 다시 받기' : '피드백 받기'}</button>
+        ${s.feedback ? `<button class="small" data-showfb="${num(i)}">피드백 보기</button>` : ''}
+      </div>
+      <div id="ovfb${num(i)}"></div>
+    </li>`).join('')}</ul>
+  </section>
+  <section class="card">
+    <h3 style="margin-top:0">내보내기</h3>
+    <div class="row">
+      <button class="small" id="dlSheet">문제지 .md</button>
+      <button class="small" id="dlAll">전체 기록 .md</button>
+      <button class="small" id="dlAnki" ${ankiN ? '' : 'disabled'}>Anki 카드 .csv (${num(ankiN)})</button>
+    </div>
+  </section>`;
+}
+
+function viewPractice(){
+  const S = state.session, s = curSet(), q = curQ(), si = state.pos.s, qi = state.pos.q;
+  const last = qi === s.questions.length - 1, lastSet = si === S.sets.length - 1;
+  const key = `${si}-${qi}`;
+  const show = settings.showText || q.reveal;
+  return `<div class="crumbs"><button class="small" id="toOverview">← 목록</button><span>세트 ${num(si+1)}/${num(S.sets.length)} · ${esc(s.name)}</span><span>문항 ${num(q.no)}/15</span></div>
+  ${s.guide ? `<p class="guide">${esc(s.guide)}</p>` : ''}
+  <section class="card">
+    <div class="spread"><span class="chip">${esc(q.type)}</span><span class="muted sm" id="plays">들은 횟수 ${num(q.plays)}</span></div>
+    <div class="row" style="margin-top:10px"><button id="play">▶ 질문 듣기</button><button id="reveal" class="small">${show ? '질문 숨기기' : '질문 글자 보기'}</button></div>
+    ${show ? `<p class="qtext">${esc(q.text)}</p>` : `<p class="qhidden">질문을 먼저 소리로 들어 보세요.</p>`}
+  </section>
+  <section class="card">
+    <div class="recrow"><button id="rec" class="rec">${q.answer.trim() ? '● 이어서 말하기' : '● 답변 시작'}</button><div id="timer" class="timer">${esc(mmss(q.seconds))}</div><div id="wc" class="wc"></div></div>
+    <div class="bar"><div id="barfill" style="width:${num(Math.min(100, num(q.seconds)/120*100))}%"></div></div>
+    <textarea id="ans" placeholder="녹음하면 여기에 글로 옮겨져요. 직접 고치거나 다른 곳의 전사본을 붙여 넣어도 돼요.">${esc(q.answer)}</textarea>
+    <div class="spread sm muted"><span>음성 인식은 Chrome이 Google 서버에서 처리해요.</span><button class="link small" id="clearAns">답변 지우기</button></div>
+    <div id="audioBox" data-key="${esc(key)}"></div>
+  </section>
+  <div class="nav">
+    <button id="prev" ${si === 0 && qi === 0 ? 'disabled' : ''}>← 이전</button>
+    ${last ? `<button class="primary" id="setFb">이 세트 피드백 받기</button>` : ''}
+    <button id="next" ${last && lastSet ? 'disabled' : ''}>${last ? '다음 세트 →' : '다음 →'}</button>
+  </div>
+  <div id="fbArea">${last && s.feedback ? viewFeedback(s.feedback, si) : ''}</div>`;
+}
+
+function viewFeedback(fb, si){
+  const c = fb.checks || {};
+  return `<section class="card">
+    <h3 style="margin-top:0">세트 ${num(si+1)} 피드백</h3>
+    ${(fb.items || []).length ? `<ol class="fbitems">${fb.items.map((it, i) => `<li>
+      <div class="spread"><span class="chip">${esc(it.category)}</span><label class="anki"><input type="checkbox" data-anki="${num(si)}-${num(i)}" ${it.anki ? 'checked' : ''}> Anki</label></div>
+      <div class="mine">${esc(it.original)}</div>${it.verified ? '' : '<span class="unv">전사본에서 그대로 찾지 못한 인용이에요</span>'}
+      <div class="fixed">${esc(it.corrected)}</div>
+      <div class="why">${esc(it.reason)}</div>
+    </li>`).join('')}</ol>` : '<p>고칠 문장을 찾지 못했어요.</p>'}
+    <h4>점검</h4>
+    <ul class="checks">
+      <li><b>질문에 맞게 답했나</b> ${esc(c.relevance)}</li>
+      <li><b>시제</b> ${esc(c.tense)}</li>
+      <li><b>세트 안 연결</b> ${esc(c.coherence)}</li>
+      <li><b>분량</b> ${esc(c.length)}</li>
+    </ul>
+    ${fb.scope_note ? `<p class="sm"><b>확인 범위</b> ${esc(fb.scope_note)}</p>` : ''}
+    <p class="sm muted">발음과 억양은 전사본만으로 판단할 수 없어서 평가하지 않았어요.</p>
+    <div class="focus"><b>다음 세트에서 의식할 점</b><br>${esc(fb.next_focus)}</div>
+    <p class="sm muted">피드백은 AI가 쓴 글이에요. 키나 비밀번호를 어딘가에 입력하라는 문구가 있으면 무시하세요.</p>
+  </section>`;
+}
+
+/* ---------- 이벤트 ---------- */
+function go(view){ stopEverything(); state.view = view; save(); render(); }
+function movePos(si, qi){ stopEverything(); state.pos = {s:si, q:qi}; state.view = 'practice'; save(); render(); autoPlay(); }
+function autoPlay(){ const q = curQ(); if(q && !q.plays){ q.plays = 1; save(); speak(q.text); refreshPlays(); } }
+function refreshPlays(){ const el = $('#plays'); if(el && curQ()) el.textContent = `들은 횟수 ${num(curQ().plays)}`; }
+
+function bind(){
+  const v = state.view;
+  if(v === 'level'){
+    $$('input[name=level]').forEach(r => r.onchange = () => {
+      const low = +r.value <= 2, real = $('input[name=mode][value=real]');
+      real.disabled = low; if(low){ $('input[name=mode][value=custom]').checked = true; }
+      $('#modeNote').hidden = !low;
+    });
+    $('#levelNext').onclick = () => {
+      const l = $('input[name=level]:checked');
+      if(!l){ toast('난이도를 골라 주세요.'); return; }
+      state.level = int(l.value, 3, 1, 6);
+      state.mode = state.level <= 2 ? 'custom' : ($('input[name=mode]:checked')?.value === 'real' ? 'real' : 'custom');
+      save();
+      if(state.surveyDone) generate(); else go('survey');
+    };
+  }
+  if(v === 'survey'){
+    const collect = () => SURVEY.forEach(f => state.survey[f.k] = $('#sv_' + f.k).value.trim());
+    $('#surveyBack').onclick = () => { collect(); go('level'); };
+    $('#surveyGo').onclick = () => {
+      collect();
+      if(!state.level){ toast('난이도부터 골라 주세요.'); go('level'); return; }
+      state.surveyDone = true; save(); generate();
+    };
+  }
+  if(v === 'overview'){
+    $('#startBtn').onclick = () => {
+      const S = state.session;
+      for(let i = 0; i < S.sets.length; i++){ const j = S.sets[i].questions.findIndex(q => !q.answer.trim()); if(j >= 0) return movePos(i, j); }
+      movePos(0, 0);
+    };
+    $$('[data-goset]').forEach(b => b.onclick = () => movePos(+b.dataset.goset, 0));
+    $$('[data-fb]').forEach(b => b.onclick = async () => {
+      const i = +b.dataset.fb;
+      if(busy || !ensureKey()) return;
+      $('#ovfb' + i).innerHTML = `<div class="loading"><div class="spinner"></div>피드백을 정리하고 있어요.</div>`;
+      await requestFeedback(i);
+      const box = $('#ovfb' + i); if(box && state.session.sets[i].feedback){ box.innerHTML = viewFeedback(state.session.sets[i].feedback, i); bindAnki(); box.scrollIntoView({behavior:'smooth'}); }
+    });
+    $$('[data-showfb]').forEach(b => b.onclick = () => {
+      const i = +b.dataset.showfb, box = $('#ovfb' + i);
+      box.innerHTML = box.innerHTML ? '' : viewFeedback(state.session.sets[i].feedback, i); bindAnki();
+    });
+    $('#dlSheet').onclick = () => download(`${state.session.title}.md`, sheetMd(false), 'text/markdown');
+    $('#dlAll').onclick = () => download(`${state.session.title} 기록.md`, sheetMd(true), 'text/markdown');
+    $('#dlAnki').onclick = () => download(`${state.session.title} Anki.csv`, ankiCsv(), 'text/csv');
+  }
+  if(v === 'practice'){
+    const S = state.session, si = state.pos.s, qi = state.pos.q, q = curQ(), key = `${si}-${qi}`;
+    updateWC(q.answer); renderAudio(key);
+    $('#toOverview').onclick = () => go('overview');
+    $('#play').onclick = () => { if(recording) return; q.plays = (q.plays || 0) + 1; save(); refreshPlays(); speak(q.text); };
+    $('#reveal').onclick = () => { if(settings.showText){ settings.showText = false; saveSettings(); q.reveal = false; } else q.reveal = !q.reveal; save(); const pos = window.scrollY; render(); window.scrollTo({top:pos}); };
+    $('#rec').onclick = () => recording ? stopRecording() : startRecording(q, key);
+    $('#ans').oninput = e => { q.answer = e.target.value; updateWC(q.answer); saveSoon(); };
+    $('#clearAns').onclick = () => { if(recording) return; if(q.answer && !confirm('이 문항의 답변과 시간을 지울까요?')) return; q.answer = ''; q.seconds = 0; save(); render(); };
+    $('#prev').onclick = () => qi > 0 ? movePos(si, qi - 1) : movePos(si - 1, S.sets[si-1].questions.length - 1);
+    $('#next').onclick = () => qi < S.sets[si].questions.length - 1 ? movePos(si, qi + 1) : movePos(si + 1, 0);
+    const fbBtn = $('#setFb'); if(fbBtn) fbBtn.onclick = async () => { await requestFeedback(si); $('#fbArea')?.scrollIntoView({behavior:'smooth'}); };
+    bindAnki();
+  }
+  $$('#app [data-cmd]').forEach(b => b.onclick = () => command(b.dataset.cmd));
+}
+function bindAnki(){
+  $$('[data-anki]').forEach(c => c.onchange = () => {
+    const [si, i] = c.dataset.anki.split('-').map(Number);
+    const it = state.session?.sets[si]?.feedback?.items[i];
+    if(it){ it.anki = c.checked; save(); }
+  });
+}
+
+function command(cmd){
+  if(busy){ toast('작업이 끝날 때까지 잠시 기다려 주세요.'); return; }
+  if(cmd === 'settings') return openSettings();
+  if(cmd === 'unlock') return openUnlock();
+  if(cmd === 'level') return go('level');
+  if(cmd === 'survey') return go('survey');
+  if(cmd === 'new'){
+    if(!state.surveyDone || !state.level){ toast('먼저 난이도와 설문을 마쳐 주세요.'); return; }
+    const has = state.session?.sets.some(s => s.questions.some(q => q.answer.trim()));
+    if(has && !confirm('새 세트를 만들면 지금 세트의 답변과 피드백이 지워져요. 필요하면 먼저 "전체 기록 .md"로 저장해 두세요. 계속할까요?')) return;
+    generate();
+  }
+}
+$$('header [data-cmd]').forEach(b => b.onclick = () => command(b.dataset.cmd));
+
+/* ---------- 내보내기 (키는 절대 들어가지 않는다) ---------- */
+function download(name, text, mime){
+  const blob = new Blob([mime === 'text/csv' ? '﻿' + text : text], {type: mime + ';charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name.replace(/[\\/:*?"<>|]/g,'_');
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function sheetMd(full){
+  const S = state.session;
+  let md = `# ${S.title}\n\n${MODES[S.mode]} · 문항당 1~2분 답변\n`;
+  if(full) md += `\n## 설문 요약\n${S.summary.map(l => `- ${l}`).join('\n')}\n`;
+  S.sets.forEach((s, i) => {
+    md += `\n## 세트 ${i+1}. ${s.name}\n`;
+    if(s.guide) md += `> ${s.guide}\n`;
+    s.questions.forEach(q => {
+      md += `\n${q.no}. [${q.type}] ${q.text}\n`;
+      if(full) md += `\n   내 답변 (${words(q.answer)} words, ${mmss(q.seconds||0)}): ${q.answer.trim() || '(없음)'}\n`;
+    });
+    if(full && s.feedback){
+      const f = s.feedback, c = f.checks || {};
+      md += `\n### 피드백\n`;
+      (f.items || []).forEach((it, k) => md += `${k+1}. [${it.category}]${it.anki ? ' (Anki)' : ''}\n   - 내 문장: ${it.original}${it.verified ? '' : ' (전사본에서 그대로 찾지 못함)'}\n   - 고친 문장: ${it.corrected}\n   - 이유: ${it.reason}\n`);
+      md += `\n- 질문에 맞게 답했나: ${c.relevance}\n- 시제: ${c.tense}\n- 세트 안 연결: ${c.coherence}\n- 분량: ${c.length}\n`;
+      if(f.scope_note) md += `- 확인 범위: ${f.scope_note}\n`;
+      md += `- 발음과 억양은 평가하지 않음\n- 다음 세트에서 의식할 점: ${f.next_focus}\n`;
+    }
+  });
+  return md;
+}
+/* Anki는 카드 필드를 HTML로 그리므로 AI가 쓴 글은 esc()로 감싼다 */
+function ankiCsv(){
+  const q = s => `"${String(s).replace(/"/g,'""')}"`;
+  const rows = [];
+  state.session.sets.forEach(s => (s.feedback?.items || []).filter(i => i.anki).forEach(i => {
+    rows.push([q(esc(i.original)), q(`${esc(i.corrected)}<br><small>${esc(i.reason)}</small>`), q(`OPIc ${esc(i.category).replace(/\s/g,'_')}`)].join(','));
+  }));
+  return rows.join('\r\n');
+}
+
+/* ---------- 잠금 해제 창 ---------- */
+let afterUnlock = null;
+function openUnlock(then){
+  afterUnlock = typeof then === 'function' ? then : null;
+  const d = $('#unlockDlg'), sw = swControlled();
+  $('#uSw').textContent = SW_MSG; $('#uSw').hidden = !sw;
+  $('#uPass').value = ''; $('#uPass').disabled = sw; $('#uGo').disabled = sw;
+  $('#uErr').hidden = true; $('#uErr').textContent = '';
+  if(!d.open) d.showModal();
+  if(!sw) $('#uPass').focus();
+}
+async function doUnlock(){
+  if(swControlled()){ $('#uSw').hidden = false; return; }
+  const pass = $('#uPass').value;
+  if(!pass){ $('#uErr').textContent = '비밀번호를 넣어 주세요.'; $('#uErr').hidden = false; return; }
+  const btn = $('#uGo');
+  btn.disabled = true; btn.textContent = '푸는 중…'; $('#uErr').hidden = true;
+  try{
+    await vault.unlock(pass);
+    $('#uPass').value = '';
+    $('#unlockDlg').close();
+    toast('잠금을 풀었어요. 30분 동안 조작이 없으면 다시 잠가요.');
+    const f = afterUnlock; afterUnlock = null;
+    if(['level','survey'].includes(state.view)) render();
+    if($('#settingsDlg').open) openSettings();
+    if(f) f();
+  }catch(e){
+    $('#uErr').textContent = e.message; $('#uErr').hidden = false;
+    $('#uPass').select();
+  }finally{ btn.disabled = swControlled(); btn.textContent = '잠금 해제'; }
+}
+$('#uGo').onclick = doUnlock;
+$('#uPass').onkeydown = e => { if(e.key === 'Enter'){ e.preventDefault(); doUnlock(); } };
+$('#uCancel').onclick = () => { $('#uPass').value = ''; $('#unlockDlg').close(); };
+$('#unlockDlg').addEventListener('close', () => { $('#uPass').value = ''; });
+$('#uWipe').onclick = () => {
+  if(!confirm('이 기기에 잠가 둔 API 키를 지울까요? 되돌릴 수 없어요. 키는 다시 넣으면 돼요.')) return;
+  vault.wipeAll();
+  $('#unlockDlg').close();
+  toast('저장된 키를 지웠어요.');
+  if($('#settingsDlg').open) openSettings();
+  if(['level','survey'].includes(state.view)) render();
+};
+
+/* ---------- 설정 창 ---------- */
+/* draftKeys는 설정 창이 열려 있는 동안 입력한 새 키만 잠깐 담는다. 창을 닫으면 지운다. */
+let draft = null;
+function keysEditable(){ return !swControlled() && !vault.isLocked(); }
+function updateKeyStatus(p){
+  const el = $('#sKeyStatus');
+  if(draft.keys[p]) el.textContent = '새 키를 입력했어요. 저장을 눌러야 바뀌어요.';
+  else if(vault.has(p)) el.textContent = `저장됨 ${vault.hint(p)}`;
+  else if(vault.isLocked()) el.textContent = '잠겨 있어요. 잠금을 풀면 쓸 수 있어요.';
+  else el.textContent = '저장된 키 없음';
+  $('#sKeyDel').hidden = !vault.has(p) || !keysEditable();
+}
+function showProvider(p){
+  const P = PROVIDERS[p];
+  draft.provider = p;
+  $('#sProv').value = p;
+  $('#sKeyLabel').textContent = `${P.label} API 키`;
+  $('#sKeyHint').textContent = P.keyHint;
+  $('#sKeyLink').href = P.keyUrl; $('#sKeyLink').textContent = P.keySite;
+  $('#sModelHint').textContent = P.modelHint;
+  $('#sKey').value = '';
+  $('#sModel').value = draft.models[p] || P.defModel;
+  $('#modelList').innerHTML = P.presets.map(n => `<option value="${esc(n)}">`).join('');
+  updateKeyStatus(p);
+}
+function keepDraft(){
+  if(!draft) return;
+  const k = $('#sKey').value.trim();
+  if(k) draft.keys[draft.provider] = k;
+  $('#sKey').value = '';
+  draft.models[draft.provider] = $('#sModel').value.trim();
+}
+function showPassBox(){
+  const dev = $('#sStoreDev').checked;
+  $('#sPassBox').hidden = !dev;
+  $('#sPassHint').textContent = vault.isUnlockedDevice()
+    ? '비밀번호를 바꿀 때만 입력하세요. 비워 두면 지금 비밀번호를 그대로 써요.'
+    : '새 비밀번호를 정해 주세요. 12자 이상이고, 잊으면 되찾을 수 없어요. 다른 사이트에서 쓰는 비밀번호는 피해 주세요.';
+}
+$('#sProv').onchange = e => { keepDraft(); showProvider(PROV_IDS.includes(e.target.value) ? e.target.value : 'gemini'); };
+$('#sStoreMem').onchange = showPassBox;
+$('#sStoreDev').onchange = showPassBox;
+function openSettings(){
+  const d = $('#settingsDlg');
+  draft = {provider:settings.provider, keys:{}, models:{...settings.models}};
+  const sw = swControlled(), editable = keysEditable();
+  $('#sSwWarn').textContent = SW_MSG; $('#sSwWarn').hidden = !sw;
+  $('#sMigrate').hidden = !migrated;
+  $('#sLockedBox').hidden = sw || !vault.isLocked();
+  for(const id of ['#sKey', '#sStoreMem', '#sStoreDev', '#sPass', '#sPass2']) $(id).disabled = !editable;
+  $(vault.mode() === 'device' ? '#sStoreDev' : '#sStoreMem').checked = true;
+  $('#sPass').value = ''; $('#sPass2').value = '';
+  if(!vault.cryptoOk()){ $('#sStoreDev').disabled = true; $('#sStoreMem').checked = true; }
+  showPassBox();
+  showProvider(settings.provider);
+  $('#sRate').value = settings.rate; $('#sRateVal').textContent = `${(+settings.rate).toFixed(2)}배`;
+  $('#sShow').checked = settings.showText;
+  $('#sRecord').checked = settings.recordAudio;
+  loadVoices();
+  if(!d.open) d.showModal();
+}
+$('#sUnlockBtn').onclick = () => openUnlock();
+$('#sRate').oninput = e => $('#sRateVal').textContent = `${(+e.target.value).toFixed(2)}배`;
+$('#sKey').oninput = () => { const el = $('#sKeyStatus'); if($('#sKey').value) el.textContent = '저장을 누르면 이 키로 바뀌어요.'; else updateKeyStatus(draft.provider); };
+$('#sKeyDel').onclick = async () => {
+  const p = draft.provider;
+  if(!keysEditable() || !confirm(`${PROVIDERS[p].label} 키를 지울까요?`)) return;
+  try{ await vault.remove(p); delete draft.keys[p]; toast('키를 지웠어요.'); }
+  catch(e){ toast('키를 지우지 못했어요: ' + e.message, 7000); }
+  updateKeyStatus(p);
+};
+$('#sTest').onclick = () => {
+  const keep = {rate:settings.rate, voiceURI:settings.voiceURI};
+  settings.rate = +$('#sRate').value; settings.voiceURI = $('#sVoice').value;
+  speak("Hi, I'm your OPIc examiner. Tell me a little bit about yourself.");
+  settings.rate = keep.rate; settings.voiceURI = keep.voiceURI;
+};
+$('#sLoadModels').onclick = async () => {
+  const p = PROV_IDS.includes($('#sProv').value) ? $('#sProv').value : 'gemini';
+  if(swControlled()){ toast(SW_MSG, 12000); return; }
+  const key = $('#sKey').value.trim() || draft?.keys[p] || vault.get(p);
+  if(!key){ toast(vault.isLocked() ? '먼저 잠금을 풀거나 키를 넣어 주세요.' : '키를 먼저 넣어 주세요.'); return; }
+  const bad = keyProblem(p, key);
+  if(bad){ toast(bad, 8000); return; }
+  const r = await listModels(p, key);
+  if(!r.ok){
+    toast('확인 실패: ' + (r.status === 0 ? r.msg : r.status === 401 || r.status === 403 || r.status === 400 ? `키가 올바르지 않아요. (${r.status} ${r.msg})` : `오류 ${r.status} ${r.msg}`), 12000);
+    return;
+  }
+  const all = [...new Set([...PROVIDERS[p].presets, ...r.list])];
+  $('#modelList').innerHTML = all.map(n => `<option value="${esc(n)}">`).join('');
+  const want = $('#sModel').value.trim().replace(/^models\//,'');
+  const aliasOk = p === 'gemini' && /-latest$/.test(want);
+  const found = r.list.includes(want);
+  toast(`키 정상. 모델 ${r.list.length}개를 불러왔어요. ` + (found ? `"${want}" 사용 가능해요.` : aliasOk ? `"${want}"은 자동으로 최신 모델을 가리키는 이름이에요.` : `"${want}"은 목록에 없어요. 입력칸을 비우고 눌러서 목록에서 골라 주세요.`), 9000);
+};
+$('#sClose').onclick = () => $('#settingsDlg').close();
+$('#settingsDlg').addEventListener('close', () => {
+  if(draft) draft.keys = {};
+  $('#sKey').value = ''; $('#sPass').value = ''; $('#sPass2').value = '';
+});
+$('#sSave').onclick = async () => {
+  keepDraft();
+  const btn = $('#sSave');
+  let note = '저장했어요.';
+  if(keysEditable()){
+    for(const p of PROV_IDS){
+      const k = draft.keys[p];
+      if(!k) continue;
+      const bad = keyProblem(p, k);
+      if(bad){ delete draft.keys[p]; showProvider(p); toast(bad + ' 키를 저장하지 않았어요.', 9000); return; }
+    }
+    const wantDevice = $('#sStoreDev').checked && vault.cryptoOk();
+    const pass = $('#sPass').value, pass2 = $('#sPass2').value;
+    const needPass = wantDevice && (!vault.isUnlockedDevice() || pass !== '');
+    if(needPass){
+      const weak = passProblem(pass); if(weak){ toast(weak); $('#sPass').focus(); return; }
+      if(pass !== pass2){ toast('두 비밀번호가 서로 달라요.'); $('#sPass2').focus(); return; }
+    }
+    btn.disabled = true;
+    if(needPass) toast('키를 암호화하고 있어요. 잠시만 기다려 주세요.', 3000);
+    try{
+      for(const p of PROV_IDS) if(draft.keys[p]) await vault.set(p, draft.keys[p]);
+      if(wantDevice){ if(needPass) await vault.useDevice(pass); note = '저장했어요. 키는 비밀번호로 잠가 이 기기에 저장했어요.'; }
+      else { if(vault.mode() === 'device') vault.useMemory(); note = '저장했어요. 키는 이 탭에만 있고 새로고침하면 지워져요.'; }
+      migrated = false;
+    }catch(e){
+      toast('키를 저장하지 못했어요: ' + e.message, 9000);
+      return;
+    }finally{
+      btn.disabled = false;
+      draft.keys = {};
+      $('#sPass').value = ''; $('#sPass2').value = '';
+    }
+  }
+  settings.provider = PROV_IDS.includes(draft.provider) ? draft.provider : 'gemini';
+  settings.models = {};
+  for(const p of PROV_IDS) if(draft.models[p]) settings.models[p] = String(draft.models[p]).slice(0, 200);
+  if(!settings.models[settings.provider]) settings.models[settings.provider] = PROVIDERS[settings.provider].defModel;
+  const rate = num($('#sRate').value);
+  settings.rate = rate >= 0.5 && rate <= 2 ? rate : 1;
+  settings.voiceURI = $('#sVoice').value;
+  settings.showText = $('#sShow').checked;
+  settings.recordAudio = $('#sRecord').checked;
+  saveSettings(); $('#settingsDlg').close(); toast(note, 6000);
+  if(['level','survey'].includes(state.view)) render();
+};
+$('#sReset').onclick = () => {
+  if(!confirm('설문, 문제, 답변, 피드백을 모두 지울까요? 설정은 남겨 두고, API 키는 다음에 따로 물어봐요.')) return;
+  try{ localStorage.removeItem('opic.state'); }catch{}
+  state = defaultState();
+  if((vault.count() || vault.hasStored()) && confirm('저장된 API 키도 지울까요? 이 기기에 비밀번호로 잠가 둔 키와 지금 탭에 있는 키를 모두 지워요.')){
+    vault.wipeAll(); toast('기록과 API 키를 모두 지웠어요.');
+  } else toast('기록을 지웠어요.');
+  $('#settingsDlg').close(); render();
+};
+
+/* ---------- 자동 잠금, 서비스 워커 변화 ---------- */
+vault.onAutoLock(() => {
+  toast('30분 동안 조작이 없어서 키를 지웠어요. 다시 쓰려면 잠금을 풀거나 키를 넣어 주세요.', 8000);
+  if(['level','survey'].includes(state.view) && !busy) render();
+});
+try{
+  if(navigator.serviceWorker) navigator.serviceWorker.addEventListener('controllerchange', () => {
+    vault.lock();
+    toast(SW_MSG, 15000);
+    if(!busy) render();
+  });
+}catch{}
+
+window.addEventListener('beforeunload', () => { stopEverything(); save(); });
+render();
+if(stateReset) toast('저장된 기록의 형식이 올바르지 않아서 처음 상태로 되돌렸어요.', 7000);
+if(migrateBlocked) toast('예전 버전이 평문으로 저장한 키를 지웠어요. ' + SW_MSG + ' 키를 발급한 곳에서 키를 새로 만드는 걸 권해요.', 15000);
+else if(migrated) openSettings();
+else if(vault.hasStored() && !swControlled()) openUnlock();
+})();
+</script>
+</body>
+</html>
