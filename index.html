@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-kxGto6N2iQwQ6s6obe3qvdbbcHtqs47/GQg0wbleLv8='; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; connect-src https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Dn3oEyCL6hc/vY6Zx7+SZyu3uxR2OZyoeCGM/NrsOf8='; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; connect-src https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
 <meta charset="utf-8">
 <meta name="referrer" content="strict-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -902,12 +902,13 @@ const FB_SCHEMA = {
 };
 
 /* ---------- 출제 ---------- */
-function surveyText(){
+function surveyText(mode){
   const s = state.survey;
   return [
     ...SURVEY_SINGLE.map(f => `- ${f.label}: ${s[f.k] || '미선택'}`),
     ...SURVEY_MULTI.map(f => `- ${f.label}: ${(s[f.k] || []).join(', ') || '없음'}`),
-    ...SURVEY_TEXT.map(f => `- ${f.label}: ${(s[f.k] || '').trim() || '패스'}`)
+    /* 실전형은 실제 OPIc처럼 Background Survey만 보낸다 */
+    ...(mode === 'real' ? [] : SURVEY_TEXT.map(f => `- ${f.label}: ${(s[f.k] || '').trim() || '패스'}`))
   ].join('\n');
 }
 /* 실제 OPIc처럼 세트마다 주제를 앱이 직접 골라 준다.
@@ -956,7 +957,7 @@ async function generate(){
 구성: ${MODES[mode]} (세트별 문항 수 ${SET_SHAPE[mode].join(', ')})
 
 [설문]
-${surveyText()}
+${surveyText(mode)}
 
 [세트별 주제 배정: 반드시 이 주제로 출제]
 ${topics.map(t => `- 세트 ${t.set}: ${t.topic} (${t.src})`).join('\n')}
@@ -1205,9 +1206,9 @@ function viewSurvey(){
     <div class="note sticky-count" id="pickCount"></div>
     ${SURVEY_MULTI.map(f => `<div class="field"><div class="flabel">${esc(f.part)} · ${esc(f.label)} <span class="tag req">필수</span> <small class="inline">Part 4~7 합쳐서 ${num(MIN_PICKS)}개 이상</small></div>
       <div class="picks">${f.opts.map((o, i) => `<label class="pick"><input type="checkbox" data-k="${esc(f.k)}" value="${num(i)}" ${(state.survey[f.k] || []).includes(o) ? 'checked' : ''}>${esc(o)}</label>`).join('')}</div></div>`).join('')}
-    <h3>더 알려 주기 <span class="tag opt">선택</span></h3>
+    ${state.mode === 'real' ? `<p class="note">실전형은 실제 시험처럼 Background Survey만으로 출제해요. 자유 입력 칸은 맞춤형에서만 써요.</p>` : `<h3>더 알려 주기 <span class="tag opt">선택</span></h3>
     <p class="muted sm">비워 둬도 돼요. 적어 두면 업무나 학업 세트, 사회 이슈 세트를 더 나에게 맞게 만들어요.</p>
-    ${SURVEY_TEXT.map(f => `<div class="field"><label for="sv_${esc(f.k)}">${esc(f.label)} <span class="tag opt">선택</span></label><textarea id="sv_${esc(f.k)}" rows="2" placeholder="${esc(f.ph)}">${esc(state.survey[f.k] || '')}</textarea></div>`).join('')}
+    ${SURVEY_TEXT.map(f => `<div class="field"><label for="sv_${esc(f.k)}">${esc(f.label)} <span class="tag opt">선택</span></label><textarea id="sv_${esc(f.k)}" rows="2" placeholder="${esc(f.ph)}">${esc(state.survey[f.k] || '')}</textarea></div>`).join('')}`}
     <div class="spread"><button id="surveyBack">← 난이도</button><button class="primary" id="surveyGo">문제 만들기</button></div>
   </section>`;
 }
@@ -1331,7 +1332,8 @@ function bind(){
       const s = {};
       for(const f of SURVEY_SINGLE){ const r = $(`input[name="sv_${f.k}"]:checked`); s[f.k] = r ? f.opts[int(r.value, 0, 0, f.opts.length - 1)] : ''; }
       for(const f of SURVEY_MULTI) s[f.k] = $$(`input[data-k="${f.k}"]:checked`).map(c => f.opts[int(c.value, 0, 0, f.opts.length - 1)]);
-      for(const f of SURVEY_TEXT) s[f.k] = $('#sv_' + f.k).value.trim();
+      /* 실전형에서는 자유 입력 칸이 화면에 없으니, 맞춤형에서 적어 둔 값을 그대로 둔다 */
+      for(const f of SURVEY_TEXT){ const el = $('#sv_' + f.k); s[f.k] = el ? el.value.trim() : (state.survey[f.k] || ''); }
       state.survey = cleanSurvey(s);
     };
     const showCount = () => {
