@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-eZY+iaZyO9fAXaggCaiL8u5eTJ9JpFZbkCvyQ7mUDWs='; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; connect-src https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-izHCHVwCMGYI5OovoO69BBXgUmriH35GSHUfwXMaAdo='; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; connect-src https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
 <meta charset="utf-8">
 <meta name="referrer" content="strict-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -54,6 +54,19 @@ h4{font-size:.98rem;margin:14px 0 6px}
 .field{margin:12px 0}
 .field label{display:block;font-weight:600;margin-bottom:4px}
 .field small{display:block;color:var(--muted);margin-bottom:4px}
+.flabel{font-weight:600;margin-bottom:6px}
+.crumbs .quit{margin-left:auto;color:var(--bad);border-color:var(--bad)}
+.flabel small.inline{display:inline;font-weight:400;margin-left:4px}
+.tag{display:inline-block;font-size:.72rem;font-weight:600;padding:1px 7px;border-radius:99px;vertical-align:middle}
+.tag.req{background:var(--bad-soft);color:var(--bad)}
+.tag.opt{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.picks{display:flex;flex-wrap:wrap;gap:6px}
+.pick{position:relative;border:1px solid var(--line);border-radius:99px;padding:5px 12px;cursor:pointer;font-size:.92rem;font-weight:400;background:var(--card)}
+.pick input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.pick:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
+.pick:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.sticky-count{position:sticky;top:58px;z-index:2;margin:14px 0}
+.sticky-count.done{background:var(--ok-soft);color:var(--ok)}
 .field textarea,.field input,.field select{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg)}
 .field .opt input{width:auto}
 .field .opt{font-weight:400}
@@ -374,28 +387,64 @@ const LEVELS = [
   {n:6, name:'가장 어려움', desc:'5단계에 세부 조건을 더하고 긴 질문, 가정 상황, 의견 방어를 요구해요. AL 목표라면 5~6단계를 추천해요.'}
 ];
 const MODES = {custom:'맞춤형', real:'실전형'};
+/* 답변 목표: 1분~1분 50초. 보통 말하기 속도(분당 약 120단어) 기준 단어 수 */
+const TARGET_MIN = 60, TARGET_MAX = 110, WORDS_MIN = 120, WORDS_MAX = 220;
 const SET_SHAPE = {custom:[4,4,2,2,3], real:[1,3,3,3,3,2]};
 const TYPES = ['Introduction','Describe','Routine','Comparison','Past experience','Role-play','Opinion','Advanced'];
 const CATS = ['문법','표현','어휘','업무 문장'];
-const SURVEY = [
-  {k:'job', label:'하는 일', hint:'분야와 업무 내용 한두 줄', ph:'예: 반도체 장비 회사 공정 엔지니어. 장비 데이터 분석과 이슈 대응을 해요.'},
-  {k:'workEnglish', label:'업무에서 영어를 쓰는 상황', hint:'없으면 패스', ph:'예: 해외 본사와 주간 회의, 이메일, 기술 문서 읽기'},
-  {k:'goal', label:'영어 목표', hint:'선택', ph:'예: 외국계 회사 이직, 미국 석박사 과정 지원'},
-  {k:'study', label:'학업이나 자격증 공부', hint:'하고 있는지와 내용', ph:'예: 퇴근 후 머신러닝 온라인 강의, GRE 준비'},
-  {k:'home', label:'사는 곳과 함께 사는 사람', hint:'', ph:'예: 서울 오피스텔에서 혼자 살아요.'},
-  {k:'sports', label:'운동', hint:'좋아하는지와 하는 운동', ph:'예: 주 3회 헬스, 가끔 러닝'},
-  {k:'hobby', label:'취미와 여가', hint:'영화, 음악, 게임, 요리, 여행 등', ph:'예: 넷플릭스 드라마, 국내 여행, 홈카페'},
-  {k:'issue', label:'관심 있는 사회 이슈', hint:'', ph:'예: AI와 일자리, 저출산, 기후 변화'},
-  {k:'recent', label:'최근 인상 깊었던 일', hint:'선택, 한두 가지', ph:'예: 첫 해외 출장, 하프 마라톤 완주'}
-];
+/* 돌발 주제: 실제 OPIc처럼 설문과 상관없이 나오는 일반 주제 */
+/* 일상 세트에 섞을 일반 일상 주제 (설문 항목과 함께 무작위로 고른다) */
+const DAILY = ['아침 루틴과 출근길','주말을 보내는 방법','좋아하는 음식과 자주 먹는 메뉴','동네 산책','집안일 나누기','가족 모임','친구와 만나는 날','쇼핑 습관','휴대폰 사용 습관','계절마다 즐기는 활동','반려동물','건강 관리 습관','새로운 것을 배운 경험','잠과 휴식','자주 가는 장소','선물 주고받기','사진과 추억','날씨에 따라 바뀌는 하루','혼자 보내는 시간','동네 맛집'];
+/* 일상 상황극: 여행, 구매, 예약, 배달 등 실생활 장면 */
+const ROLEPLAY_DAILY = ['여행 예약과 일정 변경','항공편 지연이나 결항','호텔 체크인 문제','매장에서 물건 구매와 환불','온라인 주문 배송 문제','식당 예약','음식 배달 주문 문제','병원 진료 예약','렌터카 대여','휴대폰 수리나 요금제 변경','헬스장이나 학원 등록','공연이나 영화 티켓 예매','친구와 약속 변경','이사와 집 수리 요청','중고 거래','카드 분실과 은행 문의','대중교통 분실물 찾기','카페 단체 주문','미용실 예약','여행지에서 길 찾기'];
+/* 업무나 학업 상황극 */
+const ROLEPLAY_WORK = ['회의 일정 조율','고객 요청 대응','동료에게 업무 도움 요청','출장 준비와 일정 변경','장비나 시스템 장애 대응','마감 기한 연장 요청','새 동료 안내','해외 협력사와 통화','프로젝트 범위 변경','발표 자료 피드백 요청'];
+const ROLEPLAY_STUDY = ['교수님 면담 예약','팀 과제 역할 조율','수강 신청 문제','도서관 자료 대출','스터디 모임 일정 변경','과제 제출 기한 문의','어학 수업 등록','장학금이나 서류 문의'];
+/* 시사 이슈와 일반 상식 분야: 마지막 세트용. 전문 지식이 아니라 누구나 말할 수 있는 범용 질문 */
+const CURRENT = ['AI와 일자리','환경 문제와 기후 변화','주거비와 집값','고령화와 저출산','원격 근무의 확산','SNS와 가짜 뉴스','전기차와 에너지 전환','물가 상승과 생활비','개인정보 보호','관광 산업의 변화','일과 삶의 균형','온라인 교육의 확산'];
+const GENERAL = ['과학과 우주','건강과 의학 상식','경제와 소비 생활','역사와 문화유산','스포츠 대회와 이벤트','예술과 대중문화','교육과 배움','기술과 발명품','세계 여러 나라의 문화','음식 문화','교통수단의 발전','도시와 시골의 생활'];
+const DOLBAL = ['재활용과 분리수거','날씨와 계절','지형과 자연 환경','인터넷과 스마트폰','대중교통','은행 이용','호텔 이용','가구와 가전제품','건강과 병원','패션과 옷차림','음식과 외식','명절과 공휴일','약속과 일정 관리','이웃과 동네','가족과 친구','모임과 파티','산업과 기술의 변화','집안일','지역 축제와 행사','도서관','온라인 쇼핑과 배달','영화관','공원과 공공시설','교육 제도','환경 문제','AI와 일자리','주거비와 집값','고령화와 저출산'];
 
 /* ---------- 저장된 상태 검사 ----------
    localStorage는 같은 주소의 다른 페이지도 고칠 수 있다. 그래서 읽은 값을 그대로 믿지 않고
    정해진 모양으로 다시 만든다. 모양이 크게 어긋나면 화면에 그리지 않고 처음 상태로 되돌린다. */
 /*SANITIZE-BEGIN*/
+/* 실제 OPIc Background Survey 구성. Part 1~3은 하나씩 고르는 필수 항목, Part 4~7은 합쳐서 12개 이상 */
+const SURVEY_SINGLE = [
+  {k:'job', part:'Part 1', label:'현재 하는 일', opts:['사업/회사','재택근무/재택사업','교사/교육자','군 복무','일 경험 없음']},
+  {k:'student', part:'Part 2', label:'현재 학생인가요?', opts:['예','아니오']},
+  {k:'course', part:'Part 2', label:'최근에 들은 수업', opts:['학위 과정 수업','전문 기술 향상을 위한 평생 학습','어학 수업','수강 후 5년 이상 지남']},
+  {k:'home', part:'Part 3', label:'사는 곳', opts:['개인 주택이나 아파트에 혼자 거주','친구나 룸메이트와 함께 거주','가족과 함께 거주','학교 기숙사','군대 막사']}
+];
+const SURVEY_MULTI = [
+  {k:'leisure', part:'Part 4', label:'여가 활동', opts:['영화 보기','클럽/나이트클럽 가기','공연 보기','콘서트 보기','박물관 가기','공원 가기','캠핑하기','해변 가기','스포츠 관람','집 꾸미기/주거 개선','술집/바 가기','카페/커피전문점 가기','게임하기','당구 치기','체스하기','SNS에 글 올리기','친구와 문자 대화하기','시험 대비 공부하기','TV 보기','리얼리티 쇼 보기','뉴스 보거나 듣기','요리 프로그램 보기','쇼핑하기','차로 드라이브하기','스파/마사지숍 가기','구직 활동하기','자원봉사하기']},
+  {k:'hobby', part:'Part 5', label:'취미나 관심사', opts:['아이에게 책 읽어 주기','음악 감상하기','악기 연주하기','노래 부르기','춤추기','글쓰기','그림 그리기','요리하기','반려동물 기르기','주식 투자하기','신문 읽기','여행 관련 잡지나 블로그 읽기','사진 찍기','독서']},
+  {k:'sports', part:'Part 6', label:'즐기는 운동', opts:['농구','야구/소프트볼','축구','골프','배구','테니스','배드민턴','탁구','수영','자전거','스키/스노보드','아이스 스케이트','조깅','걷기','요가','하이킹/트레킹','낚시','헬스','태권도/무술','클라이밍','운동을 하지 않음']},
+  {k:'travel', part:'Part 7', label:'휴가나 출장', opts:['국내 출장','해외 출장','집에서 보내는 휴가','국내 여행','해외 여행']}
+];
+const SURVEY_TEXT = [
+  {k:'jobDetail', label:'하는 일 자세히', ph:'예: 클라우드 인프라 엔지니어. 고객사 서버 이전과 장애 대응을 해요.'},
+  {k:'workEnglish', label:'업무나 학업에서 영어를 쓰는 상황', ph:'예: 해외 본사와 주간 회의, 이메일, 기술 문서 읽기'},
+  {k:'goal', label:'영어 목표', ph:'예: 외국계 회사 이직, 미국 석박사 과정 지원'},
+  {k:'issue', label:'관심 있는 사회 이슈', ph:'예: AI와 일자리, 저출산, 기후 변화'},
+  {k:'recent', label:'최근 인상 깊었던 일', ph:'예: 첫 해외 출장, 하프 마라톤 완주'}
+];
+const MIN_PICKS = 12;
+function cleanSurvey(raw){
+  const out = {};
+  const r = isObj(raw) ? raw : {};
+  for(const f of SURVEY_SINGLE) out[f.k] = f.opts.includes(r[f.k]) ? r[f.k] : '';
+  for(const f of SURVEY_MULTI) out[f.k] = Array.isArray(r[f.k]) ? [...new Set(r[f.k].filter(x => f.opts.includes(x)))] : [];
+  for(const f of SURVEY_TEXT) out[f.k] = str(r[f.k], 1000);
+  /* 예전 버전(자유 입력 설문)에서 넘어온 하는 일 설명은 '하는 일 자세히'로 옮긴다 */
+  if(!out.jobDetail && typeof r.job === 'string' && !out.job) out.jobDetail = str(r.job, 1000);
+  return out;
+}
+const pickCount = s => SURVEY_MULTI.reduce((n, f) => n + (s[f.k] || []).length, 0);
+const surveyValid = s => SURVEY_SINGLE.every(f => s[f.k]) && pickCount(s) >= MIN_PICKS;
 const VIEWS = ['level', 'survey', 'overview', 'practice'];
 const badShape = () => { throw new TypeError('형식이 올바르지 않아요.'); };
-const defaultState = () => ({view:'level', level:null, mode:'custom', survey:{}, surveyDone:false, session:null, used:[], pos:{s:0, q:0}});
+const defaultState = () => ({view:'level', level:null, mode:'custom', survey:cleanSurvey({}), surveyDone:false, session:null, used:[], usedTopics:[], pos:{s:0, q:0}});
 function cleanFeedback(f){
   if(f == null) return null;
   if(!isObj(f)) badShape();
@@ -415,6 +464,7 @@ function cleanSession(S){
   if(!isObj(S) || !Array.isArray(S.sets) || !S.sets.length || S.sets.length > 10) badShape();
   return {
     date:str(S.date, 20), level:int(S.level, 3, 1, 6), mode:S.mode === 'real' ? 'real' : 'custom', title:str(S.title, 200),
+    ended:S.ended === true, endedAt:int(S.endedAt, 0, 0, 99),
     summary:Array.isArray(S.summary) ? S.summary.slice(0, 3).map(x => str(x, 500)) : [],
     sets:S.sets.map(s => {
       if(!isObj(s) || !Array.isArray(s.questions) || !s.questions.length || s.questions.length > 10) badShape();
@@ -431,15 +481,15 @@ function cleanSession(S){
 function cleanState(raw){
   if(raw == null) return defaultState();
   if(!isObj(raw)) badShape();
-  const survey = {};
-  if(isObj(raw.survey)) for(const f of SURVEY) survey[f.k] = str(raw.survey[f.k], 2000);
+  const survey = cleanSurvey(raw.survey);
   const s = {
     view:VIEWS.includes(raw.view) ? raw.view : 'level',
     level:raw.level == null ? null : int(raw.level, null, 1, 6),
     mode:raw.mode === 'real' ? 'real' : 'custom',
-    survey, surveyDone:raw.surveyDone === true,
+    survey, surveyDone:raw.surveyDone === true && surveyValid(survey),
     session:cleanSession(raw.session),
     used:Array.isArray(raw.used) ? raw.used.slice(-150).map(x => str(x, 3000)) : [],
+    usedTopics:Array.isArray(raw.usedTopics) ? raw.usedTopics.slice(-40).map(x => str(x, 100)) : [],
     pos:{s:0, q:0}
   };
   if(raw.view === 'loading') s.view = s.session ? 'overview' : 'level';
@@ -761,30 +811,35 @@ const GEN_SYSTEM = `당신은 OPIc 방식의 영어 말하기 연습 세트를 �
 실제 OPIc은 난이도 1~2가 12문제지만 연습에서는 15문제를 유지하고 질문을 쉽게 만든다.
 
 [구성: 맞춤형] 총 15문제, 5개 세트, 세트별 문항 수는 정확히 4, 4, 2, 2, 3.
-세트 1: 일상 주제의 연결 질문 4개. Describe, Routine, Comparison, Past experience 순서.
+세트 1: 배정된 일상 주제의 연결 질문 4개. Describe, Routine, Comparison, Past experience 순서. 배정 주제는 설문 항목일 수도, 일반 일상 주제일 수도 있다.
 세트 2: 업무나 학업 주제의 연결 질문 4개. 같은 순서.
-세트 3: 일상 롤플레이 2개. 첫 질문은 주어진 상황에서 상대에게 질문하기, 둘째 질문은 문제가 생긴 상황에서 대안 2~3개 제시하기. 둘 다 Role-play.
-세트 4: 업무나 학업 롤플레이 2개. 같은 방식.
-세트 5: 상식, 사회, 개인 의견을 묻는 연결 질문 3개. 현황 설명(Describe), 과거와 현재 비교나 원인과 영향(Comparison), 의견과 이유 방어(Opinion) 순서로 점점 깊어진다.
+세트 3: 배정된 일상 상황(예: 여행 예약, 물건 구매와 환불, 식당 예약, 음식 배달 문제)으로 상황극 2개. 첫 질문은 그 상황에서 상대(직원, 점원, 상담원 등)에게 필요한 것을 3~4가지 물어보기, 둘째 질문은 같은 상황에서 문제가 생겨 상대에게 설명하고 대안 2~3개 제시하기. 둘 다 Role-play. 시험관이 "I'd like to give you a situation and ask you to act it out."처럼 상황을 먼저 설정해 준다.
+세트 4: 배정된 업무나 학업 상황으로 상황극 2개. 같은 방식.
+세트 5: 시사와 상식 3문항. 배정된 세 주제(1문항 시사 이슈, 2문항 돌발 주제, 3문항 일반 상식 분야)에서 한 문항씩 낸다. 이 세트만 연결 규칙의 예외로 문항끼리 주제가 달라도 된다. 유형은 Describe, Comparison, Opinion을 섞고 난이도에 맞춰 깊이를 조절한다. 전문 지식을 묻지 말고 누구나 자기 생각과 경험으로 답할 수 있는 범용 질문으로 낸다(예: 요즘 사람들이 관심 갖는 기술, 예전과 지금의 차이, 그 변화가 좋은지 나쁜지와 이유). 목적은 지식이 아니라 영어로 설명하고 의견을 펼치는 능력을 보는 것이다.
 
 [구성: 실전형] 실제 OPIc 순서. 총 15문제, 6개 세트, 세트별 문항 수는 정확히 1, 3, 3, 3, 3, 2.
 세트 1: 자기소개 1개(Introduction).
 세트 2: 설문 주제 세트. Describe, Routine, Past experience.
 세트 3: 두 번째 설문 주제 세트. 같은 순서.
 세트 4: 설문에 없던 일반 주제의 돌발 세트. Describe, Comparison, Past experience.
-세트 5: 롤플레이. 상황에 맞게 질문하기(Role-play), 문제 해결 대안(Role-play), 비슷한 과거 경험(Past experience).
-세트 6: 어드밴스 2개. 난이도 5~6이면 조건이 많고 긴 복합 질문(Advanced). 난이도 3~4이면 같은 형식의 일반 질문 2개(Comparison, Opinion 등)로 대체한다.
+세트 5: 배정된 일상 상황으로 롤플레이. 상황에 맞게 질문하기(Role-play), 문제 해결 대안(Role-play), 비슷한 과거 경험(Past experience).
+세트 6: 배정된 시사 주제로 어드밴스 2개. 난이도 5~6이면 조건이 많고 긴 복합 질문(Advanced). 난이도 3~4이면 같은 형식의 일반 질문 2개(Comparison, Opinion 등)로 대체한다.
+
+[주제 범위: 실제 OPIc처럼 넓게]
+설문은 실제 OPIc Background Survey 형식이다. 사용자는 여가, 취미, 운동, 휴가 항목을 12개 이상 골랐고, 실제 시험처럼 질문은 고른 항목과 설문에 없는 돌발 주제에서 골고루 나온다.
+사용자 메시지의 [세트별 주제 배정]을 반드시 따른다. 배정된 주제가 넓으면 그 안에서 구체적인 장면을 하나 정한다(예: "카페/커피전문점 가기"면 자주 가는 카페, 카페 문화의 변화 등).
+돌발 주제는 사용자가 고르지 않은 주제이므로 일반적인 경험과 의견을 묻는 실제 OPIc 돌발 문항처럼 만든다.
+설문 선택은 "그 활동을 한다"는 사실만 알려 준다. 구체적인 장소, 사람, 빈도 같은 사실은 단정하지 말고 질문으로 물어본다. 자유 입력이 "패스"인 항목은 내용을 지어내 단정하지 않는다.
 
 [연결 규칙]
-같은 세트의 질문은 하나의 주제와 상황을 공유하고, 뒤 질문은 앞 질문에서 말했을 법한 내용을 자연스럽게 이어받는다. 세트가 바뀌면 주제도 바뀐다.
-설문에서 알 수 없는 사실을 사용자의 실제 경험처럼 단정하지 않는다. 설문에서 "패스"인 항목은 소재로 쓰지 않는다.
-같은 질문을 반복하지 않는다. "이미 낸 질문" 목록이 있으면 설문 범위 안에서 소재와 각도를 바꾼다.
+같은 세트의 질문은 하나의 주제와 상황을 공유하고(맞춤형 세트 5는 예외), 뒤 질문은 앞 질문에서 말했을 법한 내용을 자연스럽게 이어받는다. 세트가 바뀌면 주제도 바뀐다.
+같은 질문을 반복하지 않는다. "이미 낸 질문" 목록과 소재나 각도가 겹치지 않게 한다.
 
 [질문 형식]
 시험관이 말하듯 자연스러운 구어체 영어로 쓰고, 난이도에 따라 길이와 조건의 수를 조절한다. 질문 안에 번호나 태그를 넣지 않는다. 모범 답안, 힌트, 번역은 넣지 않는다.
 
 [JSON 필드]
-summary: 설문으로 파악한 사용자 정보를 한국어 3줄 이내로. 배열 원소 하나가 한 줄. 설문에 없는 내용은 추측하지 않는다.
+summary: 설문으로 파악한 사용자 정보를 한국어 3줄 이내로. 배열 원소 하나가 한 줄. 설문에 없는 내용은 추측하지 않는다. 마지막 줄에는 이번 세트의 주제 구성을 짧게 적는다(예: "이번 주제: 카페, 업무, 날씨(돌발), 호텔 롤플레이, 재활용(돌발)").
 sets[].name: 짧은 한국어 세트 이름. 예: "일상 · 주말 러닝", "업무 롤플레이 · 해외 협력사 회의".
 sets[].guide: 한국어 한 문장 안내. 경험이 없을 수 있는 소재면 "경험이 없으면 그럴듯하게 지어내도 돼요."를 넣는다.
 sets[].questions[].type: 유형 태그. sets[].questions[].text: 영어 질문.
@@ -811,7 +866,7 @@ items: 우선순위가 높은 것부터 최대 7개 내외. category는 문법, 
 original: 전사본에 실제로 있는 부분을 한 글자도 바꾸지 않고 그대로 복사한다. 없는 문장을 만들거나 다듬어서 인용하지 않는다.
 corrected: 자연스러운 영어로 고친 문장. reason: 왜 고쳤는지 한국어 한 줄. anki: 외워 둘 가치가 있으면 true.
 전사본은 음성 인식 결과라 구두점과 대소문자가 없거나 인식 오류가 있을 수 있다. 구두점, 대소문자, 명백한 인식 오류는 지적하지 않는다.
-checks: relevance(질문에 맞게 답했는지), tense(시제가 맞는지), coherence(세트 안에서 내용이 이어지는지), length(문항별 분량이 1~2분, 대략 120~250단어에 맞는지. 주어진 단어 수를 근거로) 각각 한국어 한 줄.
+checks: relevance(질문에 맞게 답했는지), tense(시제가 맞는지), coherence(세트 안에서 내용이 이어지는지. 문항마다 주제가 다른 시사·상식 세트라면 각 답이 서론, 근거, 결론으로 논리적으로 짜였는지), length(문항별 분량이 목표인 1분~1분 50초, 대략 120~220단어에 맞는지. 주어진 단어 수와 시간을 근거로) 각각 한국어 한 줄.
 scope_note: 답변이 비어 있거나 너무 짧아 확인하지 못한 문항이 있으면 그 범위를 한국어로 밝힌다. 없으면 빈 문자열.
 next_focus: 다음 세트에서 의식할 점 한 가지를 한국어 한 문장으로.
 발음과 억양은 평가하지 않는다. 모범 답안 전체를 써 주지 않는다.
@@ -835,7 +890,42 @@ const FB_SCHEMA = {
 
 /* ---------- 출제 ---------- */
 function surveyText(){
-  return SURVEY.map(f => `- ${f.label}: ${(state.survey[f.k] || '').trim() || '패스'}`).join('\n');
+  const s = state.survey;
+  return [
+    ...SURVEY_SINGLE.map(f => `- ${f.label}: ${s[f.k] || '미선택'}`),
+    ...SURVEY_MULTI.map(f => `- ${f.label}: ${(s[f.k] || []).join(', ') || '없음'}`),
+    ...SURVEY_TEXT.map(f => `- ${f.label}: ${(s[f.k] || '').trim() || '패스'}`)
+  ].join('\n');
+}
+/* 실제 OPIc처럼 세트마다 주제를 앱이 직접 골라 준다.
+   설문 항목은 무작위로, 돌발 주제는 설문과 무관한 목록에서 뽑고, 최근에 쓴 주제는 되도록 피한다. */
+function shuffle(a){ a = [...a]; for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function assignTopics(mode){
+  const s = state.survey, recent = new Set(state.usedTopics);
+  const surveyPool = [...SURVEY_MULTI.flatMap(f => (s[f.k] || []).filter(x => x !== '운동을 하지 않음')), '집과 동네'];
+  const freshFirst = list => { const sh = shuffle(list); return [...sh.filter(x => !recent.has(x)), ...sh.filter(x => recent.has(x))]; };
+  const sv = freshFirst(surveyPool), db = freshFirst(DOLBAL), daily = freshFirst([...surveyPool, ...DAILY]);
+  const rpDaily = freshFirst(ROLEPLAY_DAILY), cur = freshFirst(CURRENT), gen = freshFirst(GENERAL);
+  const noJob = !s.job || s.job === '일 경험 없음';
+  const rpWork = freshFirst(noJob ? ROLEPLAY_STUDY : ROLEPLAY_WORK);
+  const take = arr => arr.shift() || shuffle(DOLBAL)[0];
+  const workTopic = s.job && s.job !== '일 경험 없음' ? `업무 (${s.job})` : s.student === '예' ? `학업 (${s.course || '수업'})` : `수업과 자기계발 (${s.course || '배움'})`;
+  if(mode === 'real') return [
+    {set:1, topic:'자기소개', src:'고정'},
+    {set:2, topic:take(sv), src:'설문'},
+    {set:3, topic:take(sv), src:'설문'},
+    {set:4, topic:take(db), src:'돌발'},
+    {set:5, topic:take(rpDaily), src:'일상 상황극'},
+    {set:6, topic:take(cur), src:'어드밴스(시사)'}
+  ];
+  const t5 = [take(cur), take(db), take(gen)];
+  return [
+    {set:1, topic:take(daily), src:'일상'},
+    {set:2, topic:workTopic, src:'업무/학업'},
+    {set:3, topic:take(rpDaily), src:'일상 상황극'},
+    {set:4, topic:`${take(rpWork)} (${noJob ? '학업' : '업무'})`, src:'업무/학업 상황극'},
+    {set:5, topic:`1문항 ${t5[0]} / 2문항 ${t5[1]} / 3문항 ${t5[2]}`, src:'시사 · 돌발 · 상식, 문항마다 다른 주제', parts:t5}
+  ];
 }
 function shapeOk(sets){
   const want = SET_SHAPE[state.mode];
@@ -848,11 +938,15 @@ async function generate(){
   const lvl = state.level, mode = state.mode;
   renderLoading('문제를 만들고 있어요. 10~40초쯤 걸려요.');
   const used = state.used.slice(-80);
+  const topics = assignTopics(mode);
   const user = `난이도: ${lvl}단계
 구성: ${MODES[mode]} (세트별 문항 수 ${SET_SHAPE[mode].join(', ')})
 
 [설문]
 ${surveyText()}
+
+[세트별 주제 배정: 반드시 이 주제로 출제]
+${topics.map(t => `- 세트 ${t.set}: ${t.topic} (${t.src})`).join('\n')}
 
 [이미 낸 질문: 겹치지 않게]
 ${used.length ? used.map(q => '- ' + q).join('\n') : '(없음)'}`;
@@ -876,6 +970,7 @@ ${used.length ? used.map(q => '- ' + q).join('\n') : '(없음)'}`;
     if(no !== 15) toast(`이번 세트는 ${no}문제로 나왔어요. 원하면 "새세트"로 다시 만들 수 있어요.`, 6000);
     state.session = session;
     state.used = [...state.used, ...session.sets.flatMap(s => s.questions.map(q => q.text))].slice(-150);
+    state.usedTopics = [...state.usedTopics, ...topics.flatMap(t => t.parts || [t.topic.replace(/ \((업무|학업)\)$/, '')])].slice(-40);
     state.pos = {s:0, q:0};
     state.view = 'overview';
   }catch(e){
@@ -1026,8 +1121,8 @@ function tick(q){
   const s = baseSec + Math.round((Date.now() - startAt) / 1000);
   const t = $('#timer'); if(!t) return;
   t.textContent = mmss(s);
-  t.className = 'timer' + (s >= 150 ? ' over' : s >= 60 ? ' ok' : '');
-  const b = $('#barfill'); if(b) b.style.width = Math.min(100, s / 120 * 100) + '%';
+  t.className = 'timer' + (s > TARGET_MAX ? ' over' : s >= TARGET_MIN ? ' ok' : '');
+  const b = $('#barfill'); if(b) b.style.width = Math.min(100, s / TARGET_MAX * 100) + '%';
 }
 function setRecButton(on){
   const b = $('#rec'); if(!b) return;
@@ -1036,8 +1131,8 @@ function setRecButton(on){
 }
 function updateWC(text){
   const n = words(text), el = $('#wc'); if(!el) return;
-  el.textContent = `${n} words (목표 120~250)`;
-  el.className = 'wc ' + (n > 250 ? 'over' : n >= 120 ? 'ok' : 'low');
+  el.textContent = `${n} words · 목표 1분~1분 50초 (약 ${WORDS_MIN}~${WORDS_MAX}단어)`;
+  el.className = 'wc ' + (n > WORDS_MAX ? 'over' : n >= WORDS_MIN ? 'ok' : 'low');
 }
 function renderAudio(key){
   const box = $('#audioBox');
@@ -1054,7 +1149,8 @@ function render(){
   if(v === 'level') app.innerHTML = viewLevel();
   else if(v === 'survey') app.innerHTML = viewSurvey();
   else if(v === 'overview' && state.session) app.innerHTML = viewOverview();
-  else if(v === 'practice' && curQ()) app.innerHTML = viewPractice();
+  else if(v === 'practice' && curQ() && !state.session.ended) app.innerHTML = viewPractice();
+  else if(v === 'practice' && state.session?.ended){ state.view = 'overview'; app.innerHTML = viewOverview(); }
   else { state.view = 'level'; app.innerHTML = viewLevel(); }
   if(lastError){
     app.insertAdjacentHTML('afterbegin', `<div class="warnbox" style="margin-bottom:14px;background:var(--bad-soft)"><b>문제를 만들지 못했어요</b><br>${esc(lastError)}<div class="row" style="margin-top:6px"><button class="small" data-cmd="settings">설정 열기</button><button class="small" id="errClose">닫기</button></div></div>`);
@@ -1090,8 +1186,15 @@ function viewSurvey(){
   return keyBanner() + `<section class="card">
     <h2>2. 설문조사</h2>
     <div class="warnbox">회사 기밀(고객사명, IP, 설정 원본)은 적지 마세요. 설문과 답변은 고른 AI 회사로 보내지고, Gemini 무료 키로 보낸 내용은 Google 서비스 개선에 쓰일 수 있어요.</div>
-    <p class="muted sm">모르거나 건너뛰고 싶은 항목은 비워 두거나 "패스"라고 적으면 돼요.</p>
-    ${SURVEY.map(f => `<div class="field"><label for="sv_${esc(f.k)}">${esc(f.label)}</label>${f.hint ? `<small>${esc(f.hint)}</small>` : ''}<textarea id="sv_${esc(f.k)}" rows="2" placeholder="${esc(f.ph)}">${esc(state.survey[f.k] || '')}</textarea></div>`).join('')}
+    <p class="muted sm">실제 OPIc Background Survey와 같은 구성이에요. Part 1~3은 하나씩 꼭 골라야 하고, Part 4~7은 합쳐서 ${num(MIN_PICKS)}개 이상 골라야 해요. 문제는 고른 항목과 설문에 없는 돌발 주제에서 골고루 나와요.</p>
+    ${SURVEY_SINGLE.map(f => `<div class="field"><div class="flabel">${esc(f.part)} · ${esc(f.label)} <span class="tag req">필수</span></div>
+      <div class="picks" role="radiogroup">${f.opts.map((o, i) => `<label class="pick"><input type="radio" name="sv_${esc(f.k)}" value="${num(i)}" ${state.survey[f.k] === o ? 'checked' : ''}>${esc(o)}</label>`).join('')}</div></div>`).join('')}
+    <div class="note sticky-count" id="pickCount"></div>
+    ${SURVEY_MULTI.map(f => `<div class="field"><div class="flabel">${esc(f.part)} · ${esc(f.label)} <span class="tag req">필수</span> <small class="inline">Part 4~7 합쳐서 ${num(MIN_PICKS)}개 이상</small></div>
+      <div class="picks">${f.opts.map((o, i) => `<label class="pick"><input type="checkbox" data-k="${esc(f.k)}" value="${num(i)}" ${(state.survey[f.k] || []).includes(o) ? 'checked' : ''}>${esc(o)}</label>`).join('')}</div></div>`).join('')}
+    <h3>더 알려 주기 <span class="tag opt">선택</span></h3>
+    <p class="muted sm">비워 둬도 돼요. 적어 두면 업무나 학업 세트, 사회 이슈 세트를 더 나에게 맞게 만들어요.</p>
+    ${SURVEY_TEXT.map(f => `<div class="field"><label for="sv_${esc(f.k)}">${esc(f.label)} <span class="tag opt">선택</span></label><textarea id="sv_${esc(f.k)}" rows="2" placeholder="${esc(f.ph)}">${esc(state.survey[f.k] || '')}</textarea></div>`).join('')}
     <div class="spread"><button id="surveyBack">← 난이도</button><button class="primary" id="surveyGo">문제 만들기</button></div>
   </section>`;
 }
@@ -1101,13 +1204,17 @@ function viewOverview(){
   const answered = s => s.questions.filter(q => words(q.answer) > 0).length;
   const ankiN = S.sets.reduce((n, s) => n + (s.feedback?.items || []).filter(i => i.anki).length, 0);
   const started = S.sets.some(s => answered(s) > 0);
+  const answeredAll = S.sets.reduce((n, s) => n + answered(s), 0);
+  const pendingFb = S.sets.filter(s => answered(s) > 0 && !s.feedback).length;
   return `<section class="card">
     <h2>${esc(S.title)}</h2>
-    <p class="muted sm">${esc(MODES[S.mode])} · 15문제 · 문항당 1~2분 답변</p>
+    <p class="muted sm">${esc(MODES[S.mode])} · 15문제 · 문항당 1분~1분 50초 답변</p>
     <h3>설문으로 파악한 내용</h3>
     <ul>${S.summary.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
     <p class="sm muted">틀린 내용이 있으면 <button class="link" data-cmd="survey">설문수정</button>으로 고칠 수 있어요.</p>
-    <div class="row end"><button class="primary" id="startBtn">${started ? '이어서 하기' : '1번 문항부터 시작'}</button></div>
+    ${S.ended ? `<div class="warnbox"><b>${num(S.endedAt)}번 문항에서 시험을 그만뒀어요.</b> 답한 문항은 ${num(answeredAll)}개예요. 답한 세트만 피드백을 받을 수 있고, 남은 문항은 건너뛰었어요.</div>
+    <div class="row end" style="margin-top:10px">${pendingFb ? `<button class="primary" id="fbAll">답한 세트 피드백 한 번에 받기 (${num(pendingFb)}개)</button>` : ''}<button data-cmd="new">새세트로 다시 시작</button></div>`
+    : `<div class="row end"><button class="primary" id="startBtn">${started ? '이어서 하기' : '1번 문항부터 시작'}</button></div>`}
   </section>
   <section class="card">
     <h3 style="margin-top:0">세트</h3>
@@ -1115,7 +1222,7 @@ function viewOverview(){
       <div class="spread"><b>세트 ${num(i+1)}. ${esc(s.name)}</b><span class="chip ${answered(s) === s.questions.length ? 'ok' : 'gray'}">답변 ${num(answered(s))}/${num(s.questions.length)}</span></div>
       <div>${s.questions.map(q => `<span class="chip">${num(q.no)}. ${esc(q.type)}</span>`).join('')}</div>
       <div class="row" style="margin-top:8px">
-        <button class="small" data-goset="${num(i)}">연습하기</button>
+        ${S.ended ? '' : `<button class="small" data-goset="${num(i)}">연습하기</button>`}
         <button class="small" data-fb="${num(i)}" ${answered(s) ? '' : 'disabled'}>${s.feedback ? '피드백 다시 받기' : '피드백 받기'}</button>
         ${s.feedback ? `<button class="small" data-showfb="${num(i)}">피드백 보기</button>` : ''}
       </div>
@@ -1137,7 +1244,7 @@ function viewPractice(){
   const last = qi === s.questions.length - 1, lastSet = si === S.sets.length - 1;
   const key = `${si}-${qi}`;
   const show = settings.showText || q.reveal;
-  return `<div class="crumbs"><button class="small" id="toOverview">← 목록</button><span>세트 ${num(si+1)}/${num(S.sets.length)} · ${esc(s.name)}</span><span>문항 ${num(q.no)}/15</span></div>
+  return `<div class="crumbs"><button class="small" id="toOverview">← 목록</button><span>세트 ${num(si+1)}/${num(S.sets.length)} · ${esc(s.name)}</span><span>문항 ${num(q.no)}/15</span><button class="small quit" id="quitTest">시험 그만두기</button></div>
   ${s.guide ? `<p class="guide">${esc(s.guide)}</p>` : ''}
   <section class="card">
     <div class="spread"><span class="chip">${esc(q.type)}</span><span class="muted sm" id="plays">들은 횟수 ${num(q.plays)}</span></div>
@@ -1146,7 +1253,7 @@ function viewPractice(){
   </section>
   <section class="card">
     <div class="recrow"><button id="rec" class="rec">${q.answer.trim() ? '● 이어서 말하기' : '● 답변 시작'}</button><div id="timer" class="timer">${esc(mmss(q.seconds))}</div><div id="wc" class="wc"></div></div>
-    <div class="bar"><div id="barfill" style="width:${num(Math.min(100, num(q.seconds)/120*100))}%"></div></div>
+    <div class="bar"><div id="barfill" style="width:${num(Math.min(100, num(q.seconds)/TARGET_MAX*100))}%"></div></div>
     <textarea id="ans" placeholder="녹음하면 여기에 글로 옮겨져요. 직접 고치거나 다른 곳의 전사본을 붙여 넣어도 돼요.">${esc(q.answer)}</textarea>
     <div class="spread sm muted"><span>음성 인식은 Chrome이 Google 서버에서 처리해요.</span><button class="link small" id="clearAns">답변 지우기</button></div>
     <div id="audioBox" data-key="${esc(key)}"></div>
@@ -1207,16 +1314,46 @@ function bind(){
     };
   }
   if(v === 'survey'){
-    const collect = () => SURVEY.forEach(f => state.survey[f.k] = $('#sv_' + f.k).value.trim());
+    const collect = () => {
+      const s = {};
+      for(const f of SURVEY_SINGLE){ const r = $(`input[name="sv_${f.k}"]:checked`); s[f.k] = r ? f.opts[int(r.value, 0, 0, f.opts.length - 1)] : ''; }
+      for(const f of SURVEY_MULTI) s[f.k] = $$(`input[data-k="${f.k}"]:checked`).map(c => f.opts[int(c.value, 0, 0, f.opts.length - 1)]);
+      for(const f of SURVEY_TEXT) s[f.k] = $('#sv_' + f.k).value.trim();
+      state.survey = cleanSurvey(s);
+    };
+    const showCount = () => {
+      collect();
+      const n = pickCount(state.survey), el = $('#pickCount');
+      el.textContent = `Part 4~7 선택 ${n}개 / 최소 ${MIN_PICKS}개` + (n >= MIN_PICKS ? ' · 충분해요' : ` · ${MIN_PICKS - n}개 더 골라 주세요`);
+      el.classList.toggle('done', n >= MIN_PICKS);
+    };
+    $$('#app .pick input').forEach(i => i.onchange = () => { showCount(); saveSoon(); });
+    showCount();
     $('#surveyBack').onclick = () => { collect(); go('level'); };
     $('#surveyGo').onclick = () => {
       collect();
       if(!state.level){ toast('난이도부터 골라 주세요.'); go('level'); return; }
+      const miss = SURVEY_SINGLE.find(f => !state.survey[f.k]);
+      if(miss){ toast(`${miss.part} "${miss.label}"은 필수예요. 하나를 골라 주세요.`); $(`input[name="sv_${miss.k}"]`).closest('.field').scrollIntoView({behavior:'smooth', block:'center'}); return; }
+      const n = pickCount(state.survey);
+      if(n < MIN_PICKS){ toast(`Part 4~7에서 ${MIN_PICKS - n}개를 더 골라 주세요. 실제 시험도 ${MIN_PICKS}개 이상 골라야 해요.`); $('#pickCount').scrollIntoView({behavior:'smooth', block:'center'}); return; }
       state.surveyDone = true; save(); generate();
     };
   }
   if(v === 'overview'){
-    $('#startBtn').onclick = () => {
+    const fbAll = $('#fbAll');
+    if(fbAll) fbAll.onclick = async () => {
+      if(busy || !ensureKey()) return;
+      const targets = state.session.sets.map((s, i) => i).filter(i => { const s = state.session.sets[i]; return !s.feedback && s.questions.some(q => words(q.answer) > 0); });
+      for(const [n, i] of targets.entries()){
+        toast(`피드백 ${n + 1}/${targets.length}: 세트 ${i + 1}을 정리하고 있어요.`, 60000);
+        await requestFeedback(i);
+        if(!state.session.sets[i].feedback) return;
+      }
+      toast('답한 세트의 피드백을 모두 받았어요. 각 세트의 "피드백 보기"를 눌러 확인하세요.', 6000);
+    };
+    const startBtn = $('#startBtn');
+    if(startBtn) startBtn.onclick = () => {
       const S = state.session;
       for(let i = 0; i < S.sets.length; i++){ const j = S.sets[i].questions.findIndex(q => !q.answer.trim()); if(j >= 0) return movePos(i, j); }
       movePos(0, 0);
@@ -1241,6 +1378,14 @@ function bind(){
     const S = state.session, si = state.pos.s, qi = state.pos.q, q = curQ(), key = `${si}-${qi}`;
     updateWC(q.answer); renderAudio(key);
     $('#toOverview').onclick = () => go('overview');
+    $('#quitTest').onclick = () => {
+      const done = S.sets.reduce((n, s) => n + s.questions.filter(x => words(x.answer) > 0).length, 0);
+      if(!confirm(`시험을 여기서 그만둘까요?\n\n지금까지 답한 문항 ${done}개만 남기고, 남은 문항은 건너뛰어요. 그만둔 시험은 다시 이어서 할 수 없고, 답한 세트만 피드백을 받을 수 있어요.`)) return;
+      stopEverything();
+      S.ended = true; S.endedAt = q.no;
+      save(); go('overview');
+      toast(`${q.no}번 문항에서 시험을 끝냈어요.`, 5000);
+    };
     $('#play').onclick = () => { if(recording) return; q.plays = (q.plays || 0) + 1; save(); refreshPlays(); speak(q.text); };
     $('#reveal').onclick = () => { if(settings.showText){ settings.showText = false; saveSettings(); q.reveal = false; } else q.reveal = !q.reveal; save(); const pos = window.scrollY; render(); window.scrollTo({top:pos}); };
     $('#rec').onclick = () => recording ? stopRecording() : startRecording(q, key);
@@ -1284,7 +1429,8 @@ function download(name, text, mime){
 }
 function sheetMd(full){
   const S = state.session;
-  let md = `# ${S.title}\n\n${MODES[S.mode]} · 문항당 1~2분 답변\n`;
+  let md = `# ${S.title}\n\n${MODES[S.mode]} · 문항당 1분~1분 50초 답변\n`;
+  if(S.ended) md += `\n> ${S.endedAt}번 문항에서 그만둔 시험이에요. 그 뒤 문항은 답하지 않았어요.\n`;
   if(full) md += `\n## 설문 요약\n${S.summary.map(l => `- ${l}`).join('\n')}\n`;
   S.sets.forEach((s, i) => {
     md += `\n## 세트 ${i+1}. ${s.name}\n`;
