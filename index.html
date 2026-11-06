@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-izHCHVwCMGYI5OovoO69BBXgUmriH35GSHUfwXMaAdo='; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; connect-src https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-kxGto6N2iQwQ6s6obe3qvdbbcHtqs47/GQg0wbleLv8='; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; connect-src https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
 <meta charset="utf-8">
 <meta name="referrer" content="strict-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -49,6 +49,12 @@ h4{font-size:.98rem;margin:14px 0 6px}
 .opt input{margin-top:5px}
 .opt span{display:block;color:var(--muted);font-size:.9rem}
 .note{background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-size:.9rem}
+.rules{margin-top:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:.88rem}
+.rules ul{list-style:none;padding:0;margin:6px 0}
+.rules li{margin:2px 0}
+.rules li.ok{color:var(--ok)}
+.rules li.no{color:var(--muted)}
+.rules code{background:var(--bg);padding:0 4px;border-radius:4px}
 .warnbox{background:var(--warn-soft);border-radius:10px;padding:10px 12px;font-size:.9rem}
 .badbox{background:var(--bad-soft);border-radius:10px;padding:10px 12px;font-size:.9rem}
 .field{margin:12px 0}
@@ -154,6 +160,7 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
       <small id="sPassHint"></small>
       <input id="sPass" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" data-lpignore="true" data-1p-ignore placeholder="비밀번호 (12자 이상)">
       <input id="sPass2" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" data-lpignore="true" data-1p-ignore placeholder="비밀번호 다시 입력" style="margin-top:6px">
+      <div class="rules"><b>비밀번호 규칙</b><ul id="sPassRules"></ul><small>예: <code>Cafe-opic-2026!</code> 처럼 단어, 숫자, 기호를 섞거나 16자 이상의 긴 문장으로 정하면 쉬워요. 다른 사이트에서 쓰는 비밀번호는 피해 주세요.</small></div>
     </div>
     <small style="margin-top:6px">30분 동안 아무 조작이 없으면 탭에 있던 키를 지워요. 비밀번호로 저장했다면 다시 잠금을 풀면 돼요.</small>
   </div>
@@ -264,14 +271,20 @@ const swControlled = () => { try{ return !!(navigator.serviceWorker && navigator
    "이 기기에 저장"을 고르면 PBKDF2-SHA256(600,000회, 16바이트 소금) → AES-GCM-256(12바이트 IV)으로 암호화한 값만 localStorage['opic.vault']에 둔다. */
 /*VAULT-BEGIN*/
 /* 잠금 비밀번호 강도 검사. 암호문(opic.vault)이 유출돼도 오프라인 대입 공격을 버티도록 */
-function passProblem(pass){
+/* 규칙은 설정 창에 그대로 보여 주고, 저장할 때도 같은 규칙으로 검사한다 */
+function passChecks(pass){
   pass = String(pass ?? '');
-  if(pass.length < 12) return '비밀번호는 12자 이상이어야 해요.';
-  if(/^(.)\1+$/.test(pass)) return '같은 글자만 반복한 비밀번호는 쓸 수 없어요.';
   const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter(r => r.test(pass)).length;
-  if(pass.length < 16 && classes < 2) return '16자보다 짧으면 영문, 숫자, 기호 중 두 종류 이상을 섞어 주세요.';
-  if(/^(password|qwerty|12345|11111|asdf|opic|qbooo)/i.test(pass)) return '너무 흔한 비밀번호예요. 다른 비밀번호를 정해 주세요.';
-  return '';
+  return [
+    {ok:pass.length >= 12, label:'12자 이상', msg:'비밀번호는 12자 이상이어야 해요.'},
+    {ok:pass.length >= 16 || classes >= 2, label:'영문 대문자, 소문자, 숫자, 기호(한글 포함) 중 2종류 이상 섞기 (16자 이상이면 필요 없어요)', msg:'16자보다 짧으면 영문 대문자, 소문자, 숫자, 기호 중 두 종류 이상을 섞어 주세요.'},
+    {ok:!!pass && !/^(.)\1+$/.test(pass), label:'같은 글자만 반복하지 않기 (예: aaaaaaaaaaaa)', msg:'같은 글자만 반복한 비밀번호는 쓸 수 없어요.'},
+    {ok:!!pass && !/^(password|qwerty|12345|11111|asdf|opic|qbooo)/i.test(pass), label:'password, qwerty, 12345, asdf, opic 같은 흔한 말로 시작하지 않기', msg:'너무 흔한 비밀번호예요. 다른 비밀번호를 정해 주세요.'}
+  ];
+}
+function passProblem(pass){
+  const bad = passChecks(pass).find(c => !c.ok);
+  return bad ? bad.msg : '';
 }
 const vault = (() => {
   const STORE = 'opic.vault', ITER = 600000, MAX_ITER = 5000000, IDLE_MS = 30 * 60 * 1000;
@@ -1541,8 +1554,16 @@ function showPassBox(){
   $('#sPassBox').hidden = !dev;
   $('#sPassHint').textContent = vault.isUnlockedDevice()
     ? '비밀번호를 바꿀 때만 입력하세요. 비워 두면 지금 비밀번호를 그대로 써요.'
-    : '새 비밀번호를 정해 주세요. 12자 이상이고, 잊으면 되찾을 수 없어요. 다른 사이트에서 쓰는 비밀번호는 피해 주세요.';
+    : '새 비밀번호를 정해 주세요. 잊으면 되찾을 수 없어요. 아래 규칙을 모두 지켜야 저장돼요.';
+  showPassRules();
 }
+function showPassRules(){
+  const p = $('#sPass').value, p2 = $('#sPass2').value;
+  const list = [...passChecks(p), {ok:!!p && p === p2, label:'두 칸에 같은 비밀번호 입력'}];
+  $('#sPassRules').innerHTML = list.map(c => `<li class="${c.ok ? 'ok' : 'no'}">${c.ok ? '✓' : '✗'} ${esc(c.label)}</li>`).join('');
+}
+$('#sPass').addEventListener('input', showPassRules);
+$('#sPass2').addEventListener('input', showPassRules);
 $('#sProv').onchange = e => { keepDraft(); showProvider(PROV_IDS.includes(e.target.value) ? e.target.value : 'gemini'); };
 $('#sStoreMem').onchange = showPassBox;
 $('#sStoreDev').onchange = showPassBox;
@@ -1620,8 +1641,8 @@ $('#sSave').onclick = async () => {
     const pass = $('#sPass').value, pass2 = $('#sPass2').value;
     const needPass = wantDevice && (!vault.isUnlockedDevice() || pass !== '');
     if(needPass){
-      const weak = passProblem(pass); if(weak){ toast(weak); $('#sPass').focus(); return; }
-      if(pass !== pass2){ toast('두 비밀번호가 서로 달라요.'); $('#sPass2').focus(); return; }
+      const weak = passProblem(pass); if(weak){ toast(weak + ' 비밀번호 칸 아래 규칙을 확인해 주세요.', 8000); showPassRules(); $('#sPass').focus(); return; }
+      if(pass !== pass2){ toast('두 비밀번호가 서로 달라요.', 8000); showPassRules(); $('#sPass2').focus(); return; }
     }
     btn.disabled = true;
     if(needPass) toast('키를 암호화하고 있어요. 잠시만 기다려 주세요.', 3000);
