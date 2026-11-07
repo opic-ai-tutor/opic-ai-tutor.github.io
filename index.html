@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mM6aQY1mn3rDmQt0uKtwm0pKvE29SpxbGkE7vWYQwQg='; style-src 'unsafe-inline'; img-src 'self' data: blob:; media-src blob:; connect-src https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-39AsgspUncCBPXEAfRmoOj5Rj2Z4zOjrTI4UfSU3avI='; style-src 'unsafe-inline'; img-src 'self' data: blob:; media-src blob:; connect-src https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
 <meta charset="utf-8">
 <meta name="referrer" content="strict-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -1369,18 +1369,39 @@ function pickVoice(gender = settings.voiceGender, uri = settings.voiceURI){
   const from = pool.length ? pool : voices;
   return from.find(v => /en-US/i.test(v.lang) && NICE.test(v.name)) || from.find(v => /en-US/i.test(v.lang)) || from[0] || null;
 }
-function speak(text, onend){
+/* Android는 언어 코드를 "en_AU"처럼 밑줄로 주는데, 음성 엔진에는 표준 형식 "en-AU"로 넘겨야 한다 */
+const normLang = l => String(l || 'en-US').replace(/_/g, '-');
+let speakToken = 0;
+function speak(text, onend, voiceOverride){
   if(!('speechSynthesis' in window)){ toast('이 브라우저는 읽어 주기를 지원하지 않아요.'); return; }
-  speechSynthesis.cancel();
+  const synth = speechSynthesis, token = ++speakToken;
+  const busy = synth.speaking || synth.pending;
+  synth.cancel();
   const parts = (String(text).match(/[^.!?]+[.!?]+["')]*\s*|[^.!?]+$/g) || [text]).map(p => p.trim()).filter(Boolean);
-  const v = pickVoice();
-  parts.forEach((p, i) => {
-    const u = new SpeechSynthesisUtterance(p);
-    if(v){ u.voice = v; u.lang = v.lang; } else u.lang = 'en-US';
-    u.rate = settings.rate;
-    if(i === parts.length - 1 && onend) u.onend = onend;
-    speechSynthesis.speak(u);
-  });
+  const v = voiceOverride === null ? null : (voiceOverride || pickVoice());
+  const rate = settings.rate;   // 부르는 순간의 속도를 쓴다 (설정의 "들어보기"는 바로 원래 값으로 되돌리기 때문)
+  const go = () => {
+    if(token !== speakToken) return;          // 그 사이 다른 재생을 눌렀으면 그만둔다
+    try{ synth.resume(); }catch{}             // iPhone Safari는 멈춘 상태로 남는 경우가 있다
+    let failed = false;
+    parts.forEach((p, i) => {
+      const u = new SpeechSynthesisUtterance(p);
+      if(v){ u.voice = v; u.lang = normLang(v.lang); } else u.lang = 'en-US';
+      u.rate = rate;
+      if(i === parts.length - 1 && onend) u.onend = onend;
+      u.onerror = e => {
+        if(failed || token !== speakToken || e.error === 'interrupted' || e.error === 'canceled') return;
+        failed = true;
+        /* 고른 목소리가 이 기기에서 재생되지 않으면, 한 번만 기본 목소리로 다시 읽는다 */
+        if(v){ toast('고른 목소리로 재생하지 못해서 기본 목소리로 읽어요. 설정에서 다른 목소리를 골라 보세요.', 6000); speak(text, onend, null); }
+        else toast(`읽어 주기에 실패했어요 (${e.error || '알 수 없는 오류'}). 기기의 음량과 "텍스트 음성 변환" 설정을 확인해 주세요.`, 8000);
+      };
+      synth.speak(u);
+    });
+  };
+  /* Android Chrome과 iPhone Safari는 멈춘 직후 바로 재생하면 무시하는 경우가 있어서, 재생 중이었을 때만 잠깐 쉬고 재생한다.
+     재생 중이 아니면 바로 재생한다 (iPhone Safari는 버튼을 누른 그 순간에 재생을 시작해야 소리를 허용한다) */
+  if(busy) setTimeout(go, 150); else go();
 }
 if('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
 
