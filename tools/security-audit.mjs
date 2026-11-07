@@ -18,15 +18,15 @@ const server=createServer((q,r)=>{
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const base='http://127.0.0.1:'+server.address().port;
 const profile=await mkdtemp(join(tmpdir(),'opic-audit-'));
-const chrome=spawn('C:/Program Files/Google/Chrome/Application/chrome.exe',['--headless','--no-first-run','--disable-background-networking','--disable-component-update','--no-proxy-server','--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1','--user-data-dir='+profile,'--remote-debugging-port=0','about:blank'],{windowsHide:true,stdio:'ignore'});
+const chrome=spawn('C:/Program Files/Google/Chrome/Application/chrome.exe',['--headless','--no-first-run','--disable-background-networking','--disable-component-update','--no-proxy-server','--disable-extensions','--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1','--user-data-dir='+profile,'--remote-debugging-port=0','about:blank'],{windowsHide:true,stdio:'ignore'});
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(f){for(let i=0;i<100;i++){const v=await f();if(v)return v;await wait(50);}throw Error('timeout');}
 let ws,id=0,mock=null,n=0,errors=0;
-const pending=new Map(),requests=[];
+const pending=new Map(),requests=[],paused=[];
 function c(method,params={}){const i=++id;return new Promise((r,j)=>{const t=setTimeout(()=>j(Error(method+' timeout')),7000);pending.set(i,m=>{clearTimeout(t);m.error?j(Error(m.error.message)):r(m.result);});ws.send(JSON.stringify({id:i,method,params}));});}
 async function e(expression){const r=await c('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true,userGesture:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text);return r.result.value;}
 const f=(fn,...args)=>e('('+fn.toString()+')(...'+JSON.stringify(args)+')');
-async function nav(p='/app'){await c('Page.navigate',{url:base+p});await until(()=>e('location.pathname==='+JSON.stringify(p)+' && document.readyState==="complete"').catch(()=>false));}
+async function nav(p='/app'){const navResult=await c('Page.navigate',{url:base+p});if(navResult.errorText)console.log('NAV',navResult,await e('location.href'));await until(()=>e('location.pathname==='+JSON.stringify(p)+' && document.readyState==="complete"').catch(()=>false)).catch(async()=>{throw Error('Navigation '+p+' ended at '+await e('location.href+" "+document.readyState'))});}
 const K={gemini:'AIzaAUDIT_DUMMY',openai:'sk-AUDIT_DUMMY',claude:'sk-ant-AUDIT_DUMMY'}, P='Audit-Only!93-Kdf';
 const has=(r,k)=>Object.values(r.headers).includes(k);
 const open=()=>e('document.querySelector("#settingsDlg").open || document.querySelector("[data-cmd=settings]").click()');
@@ -37,7 +37,7 @@ async function test(name,fn){try{console.log(++n,name,await fn()||'BLOCKED');}ca
 const evil='<img id="auditXss" src=x onerror="window.pwned=1">';
 try{
  const port=await until(async()=>{try{return (await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0];}catch{return false;}});
- const [tab]=await (await fetch('http://127.0.0.1:'+port+'/json/list')).json();
+ const tab=await until(async()=>(await (await fetch('http://127.0.0.1:'+port+'/json/list')).json()).find(t=>t.type==='page' && t.url==='about:blank'));
  ws=new WebSocket(tab.webSocketDebuggerUrl);
  await new Promise((r,j)=>{ws.onopen=r;ws.onerror=j;});
  ws.onmessage=async({data})=>{
@@ -46,6 +46,7 @@ try{
   if(m.method==='Network.requestWillBeSent')requests.push(m.params.request);
   if(m.method==='Fetch.requestPaused'){
    const {requestId,request}=m.params;
+   paused.push(request);
    const response=mock?.(request)||{};
    const h={'Access-Control-Allow-Origin':base,'Access-Control-Allow-Headers':'*','Access-Control-Allow-Methods':'GET, POST, OPTIONS','Content-Type':'application/json',...response.headers};
    try{await c('Fetch.fulfillRequest',{requestId,responseCode:response.status||200,responseHeaders:Object.entries(h).map(([name,value])=>({name,value})),body:Buffer.from(JSON.stringify(response.body||{})).toString('base64')});}catch{}
@@ -53,8 +54,8 @@ try{
  };
  await Promise.all(['Network','Page','Runtime'].map(d=>c(d+'.enable')));
  console.log('Browser', (await c('Browser.getVersion')).product);
- await c('Fetch.enable',{patterns:[{urlPattern:'https://*'}]});
  await nav();assert(await e('document.querySelector("#app").children.length'));
+ await c('Fetch.enable',{patterns:[{urlPattern:'https://*.googleapis.com/*'},{urlPattern:'https://api.openai.com/*'},{urlPattern:'https://api.anthropic.com/*'}]});
  for(const p of Object.keys(K))await test(p+' request header',async()=>{
   const from=requests.length;await open();await form(p,K[p]);await model();
   const expected=p==='openai'?'Bearer '+K[p]:K[p];
@@ -116,11 +117,13 @@ try{
   await e('fetch("https://audit.invalid/collect").catch(()=>{})');await until(()=>e('viol.some(([d])=>d==="connect-src")'));
  });
  await test('stored survey attribute breakout',async()=>{
+  await nav('/blank');
   const p='">'+evil;
   await f(p=>localStorage.setItem('opic.state',JSON.stringify({view:'survey',level:3,survey:{jobDetail:p}})),p);
   await nav();assert(await f(p=>[...document.querySelectorAll('input,textarea')].some(el=>el.value===p)&&!document.querySelector('#auditXss'),p));
  });
  await test('stored question and answer HTML injection',async()=>{
+  await nav('/blank');
   const p='</textarea>'+evil;
   await f(p=>localStorage.setItem('opic.state',JSON.stringify({view:'practice',session:{sets:[{questions:[{text:p,answer:p,reveal:true}]}]}})),p);
   await nav();assert(await f(p=>document.querySelector('#app').textContent.includes(p)&&!document.querySelector('#auditXss'),p));
@@ -145,11 +148,11 @@ try{
  await e('navigator.serviceWorker.getRegistrations().then(async rs=>{await Promise.all(rs.map(r=>r.unregister()));localStorage.clear();return true})');
  await nav('/probe');await until(()=>e('!navigator.serviceWorker.controller'));
  await test('Claude API redirects to CSP-allowed Gemini origin',async()=>{
-  const from=requests.length;
+  const from=paused.length;
   mock=r=>r.url.startsWith('https://api.anthropic.com')&&r.method!=='OPTIONS'?{status:307,headers:{Location:'https://generativelanguage.googleapis.com/audit-redirect'}}:{headers:{'Access-Control-Allow-Origin':'*'}};
   try{await open();await form('claude',K.claude);await model();
-   const hit=await until(()=>requests.slice(from).find(r=>r.url.endsWith('/audit-redirect')&&r.method==='GET'));
-   assert(has(hit,K.claude));return 'EXPOSED (mock redirect)';
+   const hit=await until(()=>paused.slice(from).find(r=>r.url.endsWith('/audit-redirect')&&r.method==='GET'));
+   assert(has(hit,K.claude), 'redirect headers: '+Object.keys(hit.headers).join(', '));return 'EXPOSED (mock redirect)';
   }finally{mock=null;}
  });
  await test('same-origin page restores deleted vault snapshot',async()=>{

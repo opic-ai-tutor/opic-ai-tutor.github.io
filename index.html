@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-XPnSB1D3a1ZpuGBp5++K36PGQZe/9dUp+vgytY37Ugc='; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; connect-src https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ENB9Y64YNPu3/HytTK8NXL0C7W+UjiSb1bOQjAuSoYk='; style-src 'unsafe-inline'; img-src 'self' data: blob:; media-src blob:; connect-src https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
 <meta charset="utf-8">
 <meta name="referrer" content="strict-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -58,6 +58,26 @@ h4{font-size:.98rem;margin:14px 0 6px}
 .est-fill{height:100%;background:var(--muted);border-radius:7px}
 .est-fill.top{background:var(--accent)}
 .est-p{width:40px;text-align:right;font-variant-numeric:tabular-nums}
+.prof-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px;margin:14px 0}
+.prof-item{display:flex;flex-direction:column;align-items:center;gap:2px}
+.prof-card{display:block;padding:6px;width:100%}
+.prof-card img,.prof-none{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
+.prof-none{display:grid;place-items:center;text-align:center;line-height:1.3;background:var(--bg);color:var(--muted);font-size:.85rem;font-weight:600}
+.prof-card.on{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 2px var(--accent)}
+.filebtn{position:relative;display:inline-block;border:1px solid var(--line);border-radius:10px;padding:8px 14px;cursor:pointer;background:var(--card)}
+.filebtn input{position:absolute;opacity:0;width:1px;height:1px}
+.exam-head{font-weight:700;border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:12px}
+.exam-body{display:grid;grid-template-columns:minmax(150px,230px) 1fr;gap:16px;align-items:start}
+@media (max-width:560px){.exam-body{grid-template-columns:1fr}.exam-left{max-width:260px;margin:0 auto;width:100%}}
+.avatar{aspect-ratio:1;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--bg)}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.exam-play{width:100%;margin-top:8px;background:#2f6be0;color:#fff;border-color:#2f6be0;font-weight:600;border-radius:8px}
+.exam-play:hover{filter:brightness(1.08)}
+.avatar-name{text-align:center;margin-top:6px;font-weight:600}
+.qgrid{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.qgrid span{width:34px;height:34px;display:grid;place-items:center;border-radius:6px;background:var(--bg);border:1px solid var(--line);font-size:.85rem;color:var(--muted)}
+.qgrid span.done{background:repeating-linear-gradient(45deg,var(--line) 0 3px,var(--bg) 3px 6px)}
+.qgrid span.cur{background:var(--ink);color:var(--bg);font-weight:700;border-color:var(--ink)}
 .rules{margin-top:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:.88rem}
 .rules ul{list-style:none;padding:0;margin:6px 0}
 .rules li{margin:2px 0}
@@ -127,11 +147,78 @@ dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);co
 dialog::backdrop{background:rgba(0,0,0,.4)}
 .errtext{color:var(--bad)}
 @media (max-width:520px){main{padding:12px}.card{padding:14px}}
+
+/* ===== 테마: 하늘색 물결 (레퍼런스: 부드러운 하늘색 그라데이션, 반투명 흰 카드, 알약 모양 버튼) ===== */
+:root{
+  --ink:#17324a;--muted:#5f7d90;--line:#d4e8f2;--card:rgba(255,255,255,.88);--bg:#f3fafd;
+  --accent:#2a8bd6;--accent-ink:#fff;--accent-soft:#e2f3fc;
+  --grad:linear-gradient(165deg,#cdf3f5 0%,#a2dcf0 45%,#72b9ec 100%);
+  --btn:linear-gradient(135deg,#5ccbe6,#2a8bd6);
+  --shadow:0 10px 30px rgba(36,108,168,.14);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#e6f4fb;--muted:#9bb7c8;--line:rgba(255,255,255,.12);--card:rgba(15,38,56,.84);--bg:rgba(255,255,255,.05);
+    --accent:#6cc6f0;--accent-ink:#06243a;--accent-soft:rgba(108,198,240,.15);
+    --grad:linear-gradient(165deg,#0c1f2e 0%,#113650 50%,#0f4b6c 100%);
+    --btn:linear-gradient(135deg,#55c6e6,#3b9ee0);
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+}
+html,body{background:var(--grad) fixed;min-height:100%}
+body{background-attachment:fixed}
+.top{background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.6)}
+@media (prefers-color-scheme: dark){.top{background:rgba(12,31,46,.6);border-bottom-color:rgba(255,255,255,.08)}}
+.brand{display:flex;align-items:center;gap:8px;letter-spacing:.02em;color:var(--ink)}
+.brand svg{flex:none;filter:drop-shadow(0 2px 6px rgba(36,108,168,.25))}
+.card{background:var(--card);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.7);border-radius:24px;box-shadow:var(--shadow);padding:20px}
+@media (prefers-color-scheme: dark){.card{border-color:rgba(255,255,255,.08)}}
+h2{color:var(--ink);letter-spacing:-.01em}
+button{border-radius:999px;border-color:rgba(42,139,214,.28);background:rgba(255,255,255,.9);color:var(--ink);transition:transform .08s,box-shadow .15s,border-color .15s}
+@media (prefers-color-scheme: dark){button{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}}
+button:hover{border-color:var(--accent);box-shadow:0 4px 12px rgba(42,139,214,.15)}
+button:active{transform:scale(.98)}
+button.primary{background:var(--btn);border:none;color:#fff;box-shadow:0 6px 16px rgba(42,139,214,.35)}
+button.link{box-shadow:none;background:none}
+.top nav button{background:rgba(255,255,255,.7)}
+@media (prefers-color-scheme: dark){.top nav button{background:rgba(255,255,255,.06)}}
+.opt{border-radius:18px;background:rgba(255,255,255,.6);border-color:var(--line)}
+@media (prefers-color-scheme: dark){.opt{background:rgba(255,255,255,.03)}}
+.opt:has(input:checked){background:var(--accent-soft);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.note{background:var(--accent-soft);border-radius:16px}
+.warnbox,.badbox,.focus,.rules{border-radius:16px}
+.field textarea,.field input,.field select,textarea#ans{border-radius:14px;background:var(--bg);border-color:var(--line)}
+.field textarea:focus,.field input:focus,.field select:focus,textarea#ans:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(42,139,214,.18)}
+.pick{background:rgba(255,255,255,.75)}
+@media (prefers-color-scheme: dark){.pick{background:rgba(255,255,255,.05)}}
+.pick:has(input:checked){background:var(--btn);color:#fff;border-color:transparent}
+.chip{background:var(--accent-soft);color:var(--accent)}
+.setlist li{border-radius:18px;background:rgba(255,255,255,.55);border-color:var(--line)}
+@media (prefers-color-scheme: dark){.setlist li{background:rgba(255,255,255,.03)}}
+button.rec{background:linear-gradient(135deg,#ff8a9a,#ef4f6c);border:none;box-shadow:0 6px 16px rgba(239,79,108,.35)}
+.bar,.est-track{background:rgba(42,139,214,.12)}
+.bar div,.est-fill.top{background:var(--btn)}
+.est-fill{background:rgba(95,125,144,.45)}
+.qgrid span{border-radius:10px;background:rgba(255,255,255,.7)}
+@media (prefers-color-scheme: dark){.qgrid span{background:rgba(255,255,255,.05)}}
+.qgrid span.cur{background:var(--btn);border-color:transparent;color:#fff}
+.avatar{border-radius:50%;border:4px solid rgba(255,255,255,.9);box-shadow:0 10px 30px rgba(36,108,168,.25)}
+.exam-play{background:var(--btn);border:none;border-radius:999px;box-shadow:0 6px 16px rgba(42,139,214,.35)}
+.exam-head{border-bottom-color:var(--line);color:var(--accent);letter-spacing:.02em}
+.prof-card{border-radius:20px;background:rgba(255,255,255,.7)}
+@media (prefers-color-scheme: dark){.prof-card{background:rgba(255,255,255,.05)}}
+.prof-card img,.prof-none{border-radius:50%}
+.filebtn{border-radius:999px}
+dialog{border:none;border-radius:26px;box-shadow:0 20px 60px rgba(20,60,100,.3);overflow-x:hidden;background:var(--card);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+@media (prefers-color-scheme: dark){dialog{background:#10293b}}
+dialog::backdrop{background:rgba(30,80,120,.35);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+#toast{background:rgba(23,50,74,.92);color:#fff;border-radius:999px;padding:10px 18px}
+.spinner{border-color:rgba(42,139,214,.15);border-top-color:var(--accent)}
 </style>
 </head>
 <body>
 <header class="top">
-  <div class="brand">OPIc AI 튜터</div>
+  <div class="brand"><svg width="30" height="30" viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="logoBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d9f2fb"/></linearGradient><clipPath id="logoClip"><circle cx="20" cy="20" r="18"/></clipPath></defs><circle cx="20" cy="20" r="19" fill="url(#logoBg)" stroke="#c4e7f5"/><g clip-path="url(#logoClip)"><path d="M0 25 C7 17 13 15 19 21 S30 12 40 19 V40 H0Z" fill="#8fdde8" opacity=".85"/><path d="M0 29 C8 24 14 25 21 28 S32 23 40 27 V40 H0Z" fill="#4fb3e3" opacity=".9"/></g></svg>OPIc AI 튜터</div>
   <nav>
     <button data-cmd="new">새세트</button>
     <button data-cmd="level">난이도변경</button>
@@ -181,7 +268,12 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
   </div>
   <div class="field">
     <label for="sVoice">질문 목소리</label>
+    <div class="picks" role="radiogroup" style="margin-bottom:8px">
+      <label class="pick"><input type="radio" name="sGender" value="female" id="sGenderF">여자 목소리</label>
+      <label class="pick"><input type="radio" name="sGender" value="male" id="sGenderM">남자 목소리</label>
+    </div>
     <select id="sVoice"></select>
+    <small id="sVoiceHint" style="margin-top:4px"></small>
   </div>
   <div class="field">
     <label for="sRate">말 속도 <span id="sRateVal"></span></label>
@@ -214,6 +306,12 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
     <button class="small" id="uWipe" type="button">잠금 해제 없이 키 지우기</button>
     <div class="row"><button id="uCancel" type="button">나중에</button><button class="primary" id="uGo" type="button">잠금 해제</button></div>
   </div>
+</dialog>
+<dialog id="profileDlg">
+  <h2>누구와 대화할까요?</h2>
+  <p class="sm muted">고른 캐릭터가 시험관처럼 질문해요.</p>
+  <div class="prof-grid" id="profGrid"></div>
+  <div class="row end"><button id="profClose" type="button">닫기</button></div>
 </dialog>
 <div id="toast" role="status"></div>
 
@@ -407,13 +505,14 @@ const LEVELS = [
   {n:5, name:'어려움', desc:'문단 길이 서술, 과거 현재 미래 전환, 2~3개의 조건, 추상적 주제를 포함해요.'},
   {n:6, name:'가장 어려움', desc:'5단계에 세부 조건을 더하고 긴 질문, 가정 상황, 의견 방어를 요구해요. AL 목표라면 5~6단계를 추천해요.'}
 ];
-const MODES = {custom:'맞춤형', real:'실전형'};
+const MODES = {custom:'맞춤형', real:'실전형', casual:'캐주얼 대화'};
 /* 답변 목표: 1분~1분 50초. 보통 말하기 속도(분당 약 120단어) 기준 단어 수 */
 const TARGET_MIN = 60, TARGET_MAX = 110, WORDS_MIN = 120, WORDS_MAX = 220;
 /* 세트별 문항 수. 난이도 1~2는 실제 OPIc처럼 12문항, 3~6은 15문항 */
 const SET_SHAPE = {custom:[4,4,2,2,3], real:[1,3,3,3,3,2]};
 const SET_SHAPE_LOW = {custom:[3,3,2,2,2], real:[1,3,3,3,2]};
-const shapeFor = (mode, level) => (level && level <= 2 ? SET_SHAPE_LOW : SET_SHAPE)[mode === 'real' ? 'real' : 'custom'];
+/* 캐주얼 대화는 난이도와 상관없이 10문항(3, 3, 4). 난이도는 질문의 깊이만 바꾼다 */
+const shapeFor = (mode, level) => mode === 'casual' ? [3, 3, 4] : (level && level <= 2 ? SET_SHAPE_LOW : SET_SHAPE)[mode === 'real' ? 'real' : 'custom'];
 const totalFor = (mode, level) => shapeFor(mode, level).reduce((a, b) => a + b, 0);
 const TYPES = ['Introduction','Describe','Routine','Comparison','Past experience','Role-play','Opinion','Advanced'];
 const CATS = ['문법','표현','어휘','업무 문장'];
@@ -434,6 +533,8 @@ const DOLBAL = ['재활용과 분리수거','날씨와 계절','지형과 자연
    localStorage는 같은 주소의 다른 페이지도 고칠 수 있다. 그래서 읽은 값을 그대로 믿지 않고
    정해진 모양으로 다시 만든다. 모양이 크게 어긋나면 화면에 그리지 않고 처음 상태로 되돌린다. */
 /*SANITIZE-BEGIN*/
+const MODE_IDS = ['custom', 'real', 'casual'];
+const cleanMode = m => MODE_IDS.includes(m) ? m : 'custom';
 /* 실제 OPIc Background Survey 구성. Part 1~3은 하나씩 고르는 필수 항목, Part 4~7은 합쳐서 12개 이상 */
 const SURVEY_SINGLE = [
   {k:'job', part:'Part 1', label:'현재 하는 일', opts:['사업/회사','재택근무/재택사업','교사/교육자','군 복무','일 경험 없음']},
@@ -448,6 +549,7 @@ const SURVEY_MULTI = [
   {k:'travel', part:'Part 7', label:'휴가나 출장', opts:['국내 출장','해외 출장','집에서 보내는 휴가','국내 여행','해외 여행']}
 ];
 const SURVEY_TEXT = [
+  {k:'interests', label:'내 진짜 관심사 (자세히)', ph:'예: 요즘 F1에 빠져서 주말마다 경기를 봐요. 좋아하는 팀은 맥라렌. 홈카페로 핸드드립을 연습 중이고, 일본 소도시 여행을 좋아해요. 최근엔 러닝 크루에 들어갔어요.', rows:4},
   {k:'jobDetail', label:'하는 일 자세히', ph:'예: 클라우드 인프라 엔지니어. 고객사 서버 이전과 장애 대응을 해요.'},
   {k:'workEnglish', label:'업무나 학업에서 영어를 쓰는 상황', ph:'예: 해외 본사와 주간 회의, 이메일, 기술 문서 읽기'},
   {k:'goal', label:'영어 목표', ph:'예: 외국계 회사 이직, 미국 석박사 과정 지원'},
@@ -466,7 +568,9 @@ function cleanSurvey(raw){
   return out;
 }
 const pickCount = s => SURVEY_MULTI.reduce((n, f) => n + (s[f.k] || []).length, 0);
-const surveyValid = s => SURVEY_SINGLE.every(f => s[f.k]) && pickCount(s) >= MIN_PICKS;
+/* 캐주얼 대화는 관심사 칸만 채우면 되고, 맞춤형과 실전형은 Background Survey가 필요하다 */
+const casualReady = s => (s.interests || '').trim().length >= 10;
+const surveyValid = (s, mode) => mode === 'casual' ? casualReady(s) : SURVEY_SINGLE.every(f => s[f.k]) && pickCount(s) >= MIN_PICKS;
 const VIEWS = ['level', 'survey', 'overview', 'practice'];
 const badShape = () => { throw new TypeError('형식이 올바르지 않아요.'); };
 const defaultState = () => ({view:'level', level:null, mode:'custom', survey:cleanSurvey({}), surveyDone:false, session:null, used:[], usedTopics:[], pos:{s:0, q:0}});
@@ -480,7 +584,7 @@ function cleanFeedback(f){
       if(!isObj(it)) badShape();
       return {category:str(it.category, 40), original:str(it.original, 2000), corrected:str(it.corrected, 2000), reason:str(it.reason, 1000), verified:it.verified === true};
     }),
-    checks:{relevance:str(c.relevance, 1000), tense:str(c.tense, 1000), coherence:str(c.coherence, 1000), length:str(c.length, 1000)},
+    checks:{relevance:str(c.relevance, 1000), tense:str(c.tense, 1000), coherence:str(c.coherence, 1000), length:str(c.length, 1000), structure:str(c.structure, 1000), naturalness:str(c.naturalness, 1000)},
     scope_note:str(f.scope_note, 1000), next_focus:str(f.next_focus, 1000), at:str(f.at, 40)
   };
 }
@@ -519,8 +623,9 @@ function cleanSession(S){
   if(S == null) return null;
   if(!isObj(S) || !Array.isArray(S.sets) || !S.sets.length || S.sets.length > 10) badShape();
   return {
-    date:str(S.date, 20), level:int(S.level, 3, 1, 6), mode:S.mode === 'real' ? 'real' : 'custom', title:str(S.title, 200),
+    date:str(S.date, 20), level:int(S.level, 3, 1, 6), mode:cleanMode(S.mode), title:str(S.title, 200),
     ended:S.ended === true, endedAt:int(S.endedAt, 0, 0, 99),
+    profile:str(S.profile, 40), profileChosen:S.profileChosen === true,
     estimate:(() => { try{ return cleanEstimate(S.estimate); }catch{ return null; } })(),
     summary:Array.isArray(S.summary) ? S.summary.slice(0, 3).map(x => str(x, 500)) : [],
     sets:S.sets.map(s => {
@@ -542,8 +647,8 @@ function cleanState(raw){
   const s = {
     view:VIEWS.includes(raw.view) ? raw.view : 'level',
     level:raw.level == null ? null : int(raw.level, null, 1, 6),
-    mode:raw.mode === 'real' ? 'real' : 'custom',
-    survey, surveyDone:raw.surveyDone === true && surveyValid(survey),
+    mode:cleanMode(raw.mode),
+    survey, surveyDone:raw.surveyDone === true && surveyValid(survey, cleanMode(raw.mode)),
     session:cleanSession(raw.session),
     used:Array.isArray(raw.used) ? raw.used.slice(-150).map(x => str(x, 3000)) : [],
     usedTopics:Array.isArray(raw.usedTopics) ? raw.usedTopics.slice(-40).map(x => str(x, 100)) : [],
@@ -583,6 +688,7 @@ function loadSettings(){
       models,
       rate:rate >= 0.5 && rate <= 2 ? rate : 1,
       voiceURI:typeof o.voiceURI === 'string' ? o.voiceURI.slice(0, 500) : '',
+      voiceGender:o.voiceGender === 'male' ? 'male' : 'female',
       showText:o.showText === true,
       recordAudio:typeof o.recordAudio === 'boolean' ? o.recordAudio : !IS_MOBILE
     },
@@ -592,7 +698,7 @@ function loadSettings(){
 }
 const loaded = loadSettings();
 let settings = loaded.s;
-const saveSettings = () => LS.set('opic.settings', {provider:settings.provider, models:{...settings.models}, rate:settings.rate, voiceURI:settings.voiceURI, showText:settings.showText, recordAudio:settings.recordAudio});
+const saveSettings = () => LS.set('opic.settings', {provider:settings.provider, models:{...settings.models}, rate:settings.rate, voiceURI:settings.voiceURI, voiceGender:settings.voiceGender, showText:settings.showText, recordAudio:settings.recordAudio});
 let migrated = false, migrateBlocked = false;
 const legacyKeys = loaded.legacy;
 delete loaded.legacy;
@@ -878,6 +984,15 @@ const GEN_SYSTEM = `당신은 OPIc 방식의 영어 말하기 연습 세트를 �
 세트 4: 배정된 업무나 학업 상황으로 상황극 2개. 같은 방식.
 세트 5: 시사와 상식 3문항. 배정된 세 주제(1문항 시사 이슈, 2문항 돌발 주제, 3문항 일반 상식 분야)에서 한 문항씩 낸다. 이 세트만 연결 규칙의 예외로 문항끼리 주제가 달라도 된다. 유형은 Describe, Comparison, Opinion을 섞고 난이도에 맞춰 깊이를 조절한다. 전문 지식을 묻지 말고 누구나 자기 생각과 경험으로 답할 수 있는 범용 질문으로 낸다(예: 요즘 사람들이 관심 갖는 기술, 예전과 지금의 차이, 그 변화가 좋은지 나쁜지와 이유). 목적은 지식이 아니라 영어로 설명하고 의견을 펼치는 능력을 보는 것이다.
 
+[구성: 캐주얼 대화] 총 10문제, 3개 세트, 세트별 문항 수는 정확히 3, 3, 4. 난이도와 상관없이 10문제이고, 난이도는 질문의 길이와 조건 수만 바꾼다.
+주제는 사용자가 자유 입력란, 특히 "내 진짜 관심사"에 직접 적은 내용에서만 고른다. Background Survey 항목, 돌발 주제, 시사 주제는 쓰지 않는다.
+세트마다 서로 다른 관심사를 하나씩 다룬다. 적은 관심사가 하나뿐이면 같은 관심사의 다른 측면(시작한 계기, 요즘 하는 방식, 기억에 남는 일, 앞으로의 계획 등)을 다룬다.
+세트 1: Describe, Routine, Past experience처럼 3문항.
+세트 2: Comparison, Past experience, Opinion처럼 3문항.
+세트 3: 그 관심사와 관련된 상황극 2문항(상대에게 필요한 것을 물어보기 Role-play, 문제가 생겨 설명하고 대안 제시하기 Role-play)과 Past experience 1문항, Opinion 1문항. 상황극 예: 좋아하는 경기나 공연 티켓 예매, 동호회 모임 일정 변경, 장비 구매와 환불.
+말투는 시험관보다 그 관심사를 진짜 궁금해하는 친구처럼 편하고 캐주얼하게 묻는다. 사용자가 적은 구체적인 사실(팀 이름, 장소, 활동 등)은 질문에 살려 쓰되, 적지 않은 사실은 단정하지 않는다.
+이 구성에서는 [주제 범위]와 [세트별 주제 배정]의 설문 관련 규칙 대신 이 규칙을 따른다.
+
 [구성: 실전형] 실제 OPIc 순서. 난이도 3~6은 총 15문제, 6개 세트, 세트별 문항 수는 정확히 1, 3, 3, 3, 3, 2.
 세트 1: 자기소개 1개(Introduction).
 세트 2: 설문 주제 세트. Describe, Routine, Past experience.
@@ -920,14 +1035,52 @@ const GEN_SCHEMA = {
   required:['summary','sets']
 };
 
+/* ACTFL 공식 자료 기준 (OPI Familiarization Guide 2024, ACTFL OPIc 안내, ACTFL 응시 팁).
+   OPIc은 딱딱한 문어체나 업무용 영어가 아니라, 즉흥적이고 자연스럽게 의사소통하는 능력을 본다. */
+const OPIC_PRINCIPLES = `[OPIc 공식 채점 원칙: ACTFL]
+- 네 가지 기준(FACT)을 따로 떼지 않고 종합해서 본다: 기능과 과제(Functions and tasks), 정확성(Accuracy), 맥락과 내용(Context and content), 말의 단위(Text type). 등급을 가르는 가장 큰 기준은 "어떤 과제를 해낼 수 있는가"다.
+- 정확성은 문법 완벽함이 아니라 "얼마나 잘 알아들을 수 있는가"다. 어휘, 문법, 발음, 유창성이 메시지 전달에 주는 영향을 본다. Superior에도 실수는 있으며, 문제는 반복되는 패턴이거나 의미 전달을 방해하는 실수뿐이다.
+- 시험은 즉흥적이고 연습하지 않은 실제 말하기 능력을 본다. 외운 듯한 답이나 정해진 스크립트를 그대로 읊는 말은 오히려 등급을 낮춘다. 가능한 한 많이 말하는 것이 유리하다.
+- 자연스러운 구어가 기준이다. um, uh, you know, like, I mean, kind of, well, actually 같은 이음말, 생각하며 같은 말을 반복하기, 말을 고쳐 다시 시작하기(self-correction)는 원어민도 쓰는 자연스러운 말하기라 감점 요소가 아니다. 각 등급의 Low 단계도 "약간의 망설임이 있어도 의사소통을 유지하면" 그 등급이다.
+- 딱딱한 문어체, 격식체, 어려운 단어가 점수를 올려 주지 않는다. 쉬운 단어라도 자연스럽게 이어 말하고, 구체적인 예시와 경험으로 풀어 가는 것이 높은 등급의 모습이다.
+- 등급별 핵심: Novice는 외운 표현, 단어, 구 수준. Intermediate는 익숙한 일상 주제에서 스스로 문장을 만들어 말하고 간단한 질문을 주고받으며, 학습자에게 익숙한 사람이 가끔 되물으면 이해할 수 있는 수준. Advanced는 과거, 현재, 미래 시제로 서술하고 묘사하며, 예상 못 한 문제 상황(complication)을 잘 처리하고, 문단 길이로 이어 말하며, 학습자에게 익숙하지 않은 사람도 어려움 없이 알아듣는 수준. OPIc에서 Advanced는 AL 하나다.
+- 세부 단계: Low는 그 등급 기준을 꾸준히 해내지만 망설임이 있을 수 있음. Mid는 그 등급 과제를 안정적으로 해내고 윗 등급 과제도 일부 해냄. High는 그 등급을 여유 있게 해내고 윗 등급 과제도 상당 부분 해내지만 꾸준히 유지하지 못함.`;
+
+/* 사용자가 원하는 영어: 딱딱한 교과서식이 아니라 실제 원어민들이 자유롭게 쓰는 영어.
+   오픽노잼(Sam Park) 전략은 수강 후기로 확인된 것만 넣었다: 스크립트 버리기, 초초반 → MP → 감정 → 마무리, 필러로 빈 공간 없이, 얼버무리지 않고 끝맺기 */
+const NATURAL_ENGLISH = `[채점의 기준이 되는 영어]
+- 기준은 단 하나, "원어민이 듣기에 자연스럽고 잘 알아들을 수 있는가"다. 특정 억양이나 하나의 "표준" 영어가 기준이 아니다.
+- 미국 흑인 영어, 인도 영어, 라틴계 영어, 영국과 호주 영어 등 여러 원어민과 능숙한 화자가 실제로 쓰는 자연스러운 말투는 모두 맞는 영어다. 그런 말투의 구어 문법, 속어, 말버릇은 뜻이 잘 통하면 틀린 것으로 고치지 않는다.
+- 비즈니스 상황에서 쓰는 깔끔한 말투도 좋지만 강요하지 않는다. 고칠 때는 캐주얼하고 자연스러운 구어를 기본으로 한다.
+
+[오픽노잼(Sam Park) 답변 전략: 채점 포인트로 함께 본다]
+- 스크립트를 외우지 말고 자기 경험과 관심 분야로 즉흥적으로 말한다. 외운 티가 나는 답은 약점으로 본다.
+- 답변 흐름은 초초반 → MP → 감정 → 마무리다.
+  초초반: 질문을 받자마자 짧은 반응이나 이음말로 자연스럽게 말문을 연다. 예: "Oh, my favorite cafe? Hmm, let me think."
+  MP(메인 포인트): 질문에 대한 핵심 답을 앞부분에서 분명히 말한다.
+  감정: 그때의 느낌, 반응, 생각을 생생하게 넣는다. 예: I was like, "Wow, this is actually amazing."
+  마무리: 짧고 분명하게 끝맺는다. 예: "So yeah, that's pretty much it." 얼버무리며 흐지부지 끝내지 않는다.
+- you know, like, I mean, well, actually, kind of 같은 필러로 긴 침묵 없이 흐름을 이어 가는 것은 감점이 아니라 유창함을 보여 주는 장점이다. 다만 필러만 반복하고 내용이 없으면 안 된다.
+- 원어민이 실제로 쓰는 캐주얼한 표현이 교과서식 문장보다 낫다.`;
+
 const FB_SYSTEM = `당신은 OPIc 말하기 코치입니다. 사용자가 한 세트의 질문과 답변 전사본을 주면 지정된 JSON으로만 피드백합니다. 사용자는 OPIc AL, 외국계 회사 이직, 미국 석박사 과정을 준비하는 성인입니다.
 
+${OPIC_PRINCIPLES}
+
+${NATURAL_ENGLISH}
+
+[피드백 방향]
+- 목표는 "더 자연스럽고 유창하게 많이 말하기"다. 딱딱한 업무용 영어나 문어체로 바꾸라고 하지 않는다.
+- 이음말(um, uh, you know, like, I mean 등), 같은 말 반복, 말을 고쳐 다시 시작한 부분은 지적하지 않고 고친 문장에서 지우지도 않는다.
+- 우선순위: (1) 뜻 전달을 막는 실수 (2) 반복되는 패턴의 실수, 특히 과거 경험 문항의 시제 (3) 질문이 요구한 과제를 못 한 부분(비교를 안 했거나, 롤플레이에서 질문을 안 했거나, 대안을 안 냈거나) (4) 원어민이 실제로 말할 때 더 자연스러운 구어 표현. 사소한 관사나 전치사 실수는 뜻 전달에 문제가 없으면 뒤로 미룬다.
+- 외운 스크립트처럼 들리는 답(질문과 상관없는 정형화된 문장, 어색하게 격식 있는 표현)은 자연스럽게 바꾸도록 짚어 준다.
+
 [규칙]
-items: 우선순위가 높은 것부터 최대 7개 내외. category는 문법, 표현, 어휘, 업무 문장 중 하나. "업무 문장"은 업무나 학업 상황에서 더 프로페셔널하게 말할 수 있는 문장이다.
+items: 우선순위가 높은 것부터 최대 7개 내외. category는 문법, 표현, 어휘, 업무 문장 중 하나. "표현"은 더 자연스러운 구어 표현으로 바꾸는 것이고, "업무 문장"은 업무나 학업 상황극에서 실제 직장인이 편하게 말하는 자연스러운 문장이다(딱딱한 격식체가 아니다).
 original: 전사본에 실제로 있는 부분을 한 글자도 바꾸지 않고 그대로 복사한다. 없는 문장을 만들거나 다듬어서 인용하지 않는다.
-corrected: 자연스러운 영어로 고친 문장. reason: 왜 고쳤는지 한국어 한 줄.
+corrected: 원어민이 대화에서 실제로 할 법한 자연스러운 구어체 영어로 고친 문장. reason: 왜 고쳤는지 한국어 한 줄.
 전사본은 음성 인식 결과라 구두점과 대소문자가 없거나 인식 오류가 있을 수 있다. 구두점, 대소문자, 명백한 인식 오류는 지적하지 않는다.
-checks: relevance(질문에 맞게 답했는지), tense(시제가 맞는지), coherence(세트 안에서 내용이 이어지는지. 문항마다 주제가 다른 시사·상식 세트라면 각 답이 서론, 근거, 결론으로 논리적으로 짜였는지), length(문항별 분량이 목표인 1분~1분 50초, 대략 120~220단어에 맞는지. 주어진 단어 수와 시간을 근거로) 각각 한국어 한 줄.
+checks: relevance(질문에 맞게 답했는지), tense(시제가 맞는지), coherence(세트 안에서 내용이 이어지는지. 문항마다 주제가 다른 시사·상식 세트라면 각 답이 서론, 근거, 결론으로 논리적으로 짜였는지), length(문항별 분량이 목표인 1분~1분 50초, 대략 120~220단어에 맞는지. 주어진 단어 수와 시간을 근거로), structure(오픽노잼 흐름인 초초반, MP, 감정, 마무리가 살아 있는지와 필러로 끊김 없이 이어 갔는지. 빠진 단계가 있으면 어느 문항에서 빠졌는지), naturalness(원어민이 듣기에 자연스러운지, 외운 티나 교과서식 말투가 있는지) 각각 한국어 한 줄.
 scope_note: 답변이 비어 있거나 너무 짧아 확인하지 못한 문항이 있으면 그 범위를 한국어로 밝힌다. 없으면 빈 문자열.
 next_focus: 다음 세트에서 의식할 점 한 가지를 한국어 한 문장으로.
 발음과 억양은 평가하지 않는다. 모범 답안 전체를 써 주지 않는다.
@@ -935,17 +1088,22 @@ next_focus: 다음 세트에서 의식할 점 한 가지를 한국어 한 문장
 
 const EST_SYSTEM = `당신은 ACTFL OPIc 채점 기준을 잘 아는 말하기 평가 코치입니다. 사용자가 OPIc 연습 시험의 질문과 답변 전사본을 주면, 예상 등급을 하나로 단정하지 말고 확률 분포로 지정된 JSON에 답합니다.
 
-[판단 기준: ACTFL 말하기 등급 기준]
-- 기능과 과제: 단순한 질문과 답(Novice), 익숙한 주제에서 문장으로 말하기와 간단한 질문(Intermediate), 과거 현재 미래를 넘나드는 서술과 묘사, 예상 밖 상황(complication) 해결(Advanced).
-- 말의 단위: 단어나 외운 표현(Novice) / 문장과 문장 묶음(IL~IM) / 연결된 문장, 문단에 가까운 말하기(IH) / 일관된 문단 길이의 말하기(AL).
-- IH와 AL의 차이: IH는 Advanced 과제를 대부분 해내지만 시제 통제, 문단 유지, 복잡한 상황 처리에서 가끔 무너진다. AL은 대부분의 문항에서 문단 길이로 시제를 통제하며 서술하고, 롤플레이의 문제 상황을 대안과 함께 잘 처리한다.
-- IM1, IM2, IM3: 모두 문장 단위지만 IM3로 갈수록 문장이 길어지고 연결어가 늘며, 몇몇 문항에서는 문단에 가까워진다.
-- 정확성: 문법과 어휘 실수가 의사 전달을 얼마나 방해하는지, 시제와 수 일치 같은 기본 구조를 얼마나 일관되게 통제하는지.
-- 질문 적합성: 질문이 요구한 과제(묘사, 루틴, 비교, 과거 경험, 롤플레이 질문하기, 대안 제시, 의견 방어)를 실제로 수행했는지.
+${OPIC_PRINCIPLES}
+
+${NATURAL_ENGLISH}
+
+[이 앱에서 등급을 가를 때 볼 것]
+- 등급의 큰 틀은 ACTFL 기준(과제 수행, 시제, 문단 길이)으로 정한다. 같은 범위 안에서는 오픽노잼 전략(분명한 MP, 생생한 감정과 디테일, 필러로 끊김 없이 이어 가기, 분명한 마무리, 외운 티 없는 즉흥성)이 잘 살아 있을수록 높은 쪽으로 본다.
+- 과제 수행: 질문이 요구한 과제(묘사, 루틴, 비교, 과거 경험, 롤플레이에서 질문하기, 문제 상황 설명과 대안 제시, 의견과 이유)를 실제로 해냈는지가 가장 중요하다.
+- 말의 단위: 단어나 외운 표현(Novice) / 문장과 짧은 문장 묶음(IL~IM2) / 이어지는 문장, 몇몇 문항에서 문단에 가까움(IM3) / 대부분 문단에 가깝게 이어 말하지만 가끔 무너짐(IH) / 대부분의 문항에서 문단 길이로 꾸준히 이어 말함(AL).
+- IH와 AL의 차이: IH는 Advanced 과제를 상당 부분 해내지만 과거 시제 서술, 문단 유지, 롤플레이의 문제 상황 처리를 꾸준히 유지하지 못한다. AL은 대부분의 문항에서 시제를 통제하며 서술하고 문제 상황을 대안과 함께 처리한다. 사소한 실수와 망설임이 있어도 AL이다.
+- 자연스러움과 즉흥성: 쉬운 단어라도 자연스럽게 이어 가며 구체적인 경험과 예시로 길게 말하면 높게 본다. 외운 스크립트처럼 정형화되어 질문과 잘 맞지 않는 답은 낮게 본다. 이음말, 반복, 말 고침은 감점하지 않는다.
+- 정확성: 뜻 전달을 막거나 반복되는 패턴의 실수(특히 과거 시제)만 등급에 반영한다. 고립된 사소한 실수로 등급을 내리지 않는다.
 - 난이도: 사용자가 고른 시험 난이도도 참고한다. 난이도 1~2만 풀었다면 IH나 AL 근거가 부족하다.
 
 [제약]
-- 전사본은 음성 인식 결과라 구두점이 없고 인식 오류가 있을 수 있다. 발음, 억양, 실제 유창성은 들을 수 없으므로, 단어 수와 답변 시간(분당 단어 수)만 유창성의 간접 근거로 쓴다.
+- 전사본은 음성 인식 결과라 구두점이 없고 인식 오류가 있을 수 있으며, 이음말이 빠져 있을 수도 있다. 발음, 억양, 실제 유창성은 들을 수 없으므로, 말한 양(단어 수)과 답변 시간(분당 단어 수)만 유창성의 간접 근거로 쓴다.
+- weaknesses와 next_steps에 "더 격식 있게", "어려운 단어를 써라" 같은 조언을 넣지 않는다. 다음 등급으로 가는 조언은 과제 수행, 시제 통제, 문단 길이로 이어 말하기, 구체적인 경험과 예시로 풀기, 롤플레이 문제 상황 처리 쪽으로 쓴다.
 - 답한 문항이 적거나 답이 짧으면 근거가 부족한 것이므로 분포를 넓게 잡고 confidence에 그 이유를 적는다.
 - dist는 인접한 2~4개 등급에 나눠 합이 100이 되게 한다. 한 등급에 80%를 넘게 주지 않는다.
 - range는 가장 가능성이 높은 구간을 "IH~AL"처럼 짧게 적는다.
@@ -975,8 +1133,8 @@ const FB_SCHEMA = {
       reason:{type:'STRING'}
     }, required:['category','original','corrected','reason']}},
     checks:{type:'OBJECT', properties:{
-      relevance:{type:'STRING'}, tense:{type:'STRING'}, coherence:{type:'STRING'}, length:{type:'STRING'}
-    }, required:['relevance','tense','coherence','length']},
+      relevance:{type:'STRING'}, tense:{type:'STRING'}, coherence:{type:'STRING'}, length:{type:'STRING'}, structure:{type:'STRING'}, naturalness:{type:'STRING'}
+    }, required:['relevance','tense','coherence','length','structure','naturalness']},
     scope_note:{type:'STRING'},
     next_focus:{type:'STRING'}
   },
@@ -986,6 +1144,7 @@ const FB_SCHEMA = {
 /* ---------- 출제 ---------- */
 function surveyText(mode){
   const s = state.survey;
+  if(mode === 'casual') return SURVEY_TEXT.map(f => `- ${f.label}: ${(s[f.k] || '').trim() || '패스'}`).join('\n');
   return [
     ...SURVEY_SINGLE.map(f => `- ${f.label}: ${s[f.k] || '미선택'}`),
     ...SURVEY_MULTI.map(f => `- ${f.label}: ${(s[f.k] || []).join(', ') || '없음'}`),
@@ -1006,6 +1165,11 @@ function assignTopics(mode){
   const rpWork = freshFirst(noJob ? ROLEPLAY_STUDY : ROLEPLAY_WORK);
   const take = arr => arr.shift() || shuffle(DOLBAL)[0];
   const workTopic = s.job && s.job !== '일 경험 없음' ? `업무 (${s.job})` : s.student === '예' ? `학업 (${s.course || '수업'})` : `수업과 자기계발 (${s.course || '배움'})`;
+  if(mode === 'casual') return [
+    {set:1, topic:'내가 적은 관심사 중 하나', src:'캐주얼', parts:[]},
+    {set:2, topic:'세트 1과 다른 관심사', src:'캐주얼', parts:[]},
+    {set:3, topic:'또 다른 관심사로 상황극 2문항 + 경험과 의견', src:'캐주얼 상황극', parts:[]}
+  ];
   const low = state.level && state.level <= 2;   // 난이도 1~2는 12문항: 실전형은 어드밴스 없음, 맞춤형 마지막 세트는 2문항
   if(mode === 'real') return [
     {set:1, topic:'자기소개', src:'고정'},
@@ -1165,16 +1329,45 @@ function viewEstimate(S){
 
 /* ---------- 음성: 읽어 주기 ---------- */
 let voices = [];
+/* 브라우저는 목소리의 성별을 알려 주지 않아서, Windows, Edge, Chrome, macOS, iOS에서 흔한 음성 이름으로 구분한다 */
+const MALE_NAMES = /\b(male|david|mark|guy|davis|andrew|brian|christopher|eric|roger|steffan|tony|jason|ryan|thomas|george|daniel|alex|fred|aaron|arthur|gordon|lee|oliver|rishi|ralph|albert|junior|reed|rocko|eddy|grandpa|william|liam|connor|prabhat|james|neil|mitchell|luke|wayne|elliot|duncan|ken|kenneth|noah|ethan|jacob|josh)\b/i;
+const FEMALE_NAMES = /\b(female|zira|aria|jenny|ava|emma|michelle|ana|sara|jane|nancy|amber|ashley|cora|elizabeth|monica|libby|sonia|maisie|hazel|susan|natasha|clara|emily|neerja|samantha|karen|moira|tessa|veena|fiona|victoria|allison|kathy|shelley|sandy|flo|grandma|catherine|heera|kate|serena|martha|nicky|zoe|joanna|kimberly|salli|ivy|olivia|isla|abbi|bella|hollie|molly|aoife|leah|luna|nova|sienna)\b/i;
+const voiceGender = v => MALE_NAMES.test(v.name) && !/female/i.test(v.name) ? 'male' : FEMALE_NAMES.test(v.name) ? 'female' : /^Google US English$/i.test(v.name) ? 'female' : '';
+const NICE = /Natural|Online|Neural|Google|Premium|Enhanced/i;
+/* macOS와 iOS Safari에 들어 있는 장난용 효과음 목소리는 연습에 쓸 수 없어서 뺀다 */
+const NOVELTY = /\b(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|deranged|hysterical|princess)\b/i;
+/* 목소리 목록에 나라(억양)를 보여 주기 위한 이름 */
+const ACCENTS = {US:'미국', GB:'영국', AU:'호주', CA:'캐나다', IN:'인도', IE:'아일랜드', NZ:'뉴질랜드', ZA:'남아공', SG:'싱가포르', PH:'필리핀', HK:'홍콩', NG:'나이지리아', KE:'케냐', TZ:'탄자니아', GH:'가나', PK:'파키스탄', JM:'자메이카', SC:'스코틀랜드'};
+const region = v => (String(v.lang).split(/[-_]/)[1] || '').toUpperCase();
+const accentName = r => ACCENTS[r] || r || '기타';
+const byRegion = (a, b) => region(a) === region(b) ? a.name.localeCompare(b.name) : region(a) === 'US' ? -1 : region(b) === 'US' ? 1 : accentName(region(a)).localeCompare(accentName(region(b)));
 function loadVoices(){
-  voices = (speechSynthesis.getVoices() || []).filter(v => /^en[-_]/i.test(v.lang));
+  voices = (speechSynthesis.getVoices() || []).filter(v => /^en[-_]/i.test(v.lang) && !NOVELTY.test(v.name));
   const sel = $('#sVoice'); if(!sel) return;
-  const cur = pickVoice();
-  sel.innerHTML = voices.length ? voices.map(v => `<option value="${esc(v.voiceURI)}" ${cur && v.voiceURI === cur.voiceURI ? 'selected' : ''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('') : '<option value="">영어 음성을 찾지 못했어요</option>';
+  const g = sel.dataset.gender || settings.voiceGender;
+  const gName = g === 'male' ? '남자' : '여자';
+  /* 고른 성별 목소리를 나라별로 묶어 위에 보여 주고, 나머지는 아래에 둔다. 억양은 이 목록에서 바로 고른다 */
+  /* 목록은 원래처럼 단순하게 한 줄씩 보여 준다. 토글은 다른 성별로 확실한 목소리만 뺀다.
+     Android Chrome처럼 이름이 "English Australia"뿐이라 남녀를 알 수 없는 목소리는 그대로 둔다 */
+  const known = voices.some(v => voiceGender(v));
+  let list = voices.filter(v => !voiceGender(v) || voiceGender(v) === g).sort(byRegion);
+  if(!list.length) list = [...voices].sort(byRegion);
+  const cur = pickVoice(g, sel.dataset.uri);
+  sel.innerHTML = !voices.length ? '<option value="">영어 음성을 찾지 못했어요</option>'
+    : list.map(v => `<option value="${esc(v.voiceURI)}" ${cur && v.voiceURI === cur.voiceURI ? 'selected' : ''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('');
+  const hint = $('#sVoiceHint');
+  if(hint) hint.textContent = !voices.length ? '이 브라우저에는 영어 음성이 없어요.'
+    : !known ? `이 기기는 목소리 이름에 남녀 정보가 없어서 토글로 거를 수 없어요. 들어보기로 골라 주세요. Android는 휴대폰 설정의 "텍스트 음성 변환"에서 나라별 목소리를 남자나 여자로 바꿀 수 있어요.`
+    : list.some(v => voiceGender(v) === g) ? ''
+    : `이 기기에는 ${gName} 영어 목소리가 없어서 다른 목소리를 보여 줘요.`;
 }
-function pickVoice(){
-  return voices.find(v => v.voiceURI === settings.voiceURI)
-    || voices.find(v => /en-US/i.test(v.lang) && /Natural|Google US English|Aria|Jenny|Samantha|Ava/i.test(v.name))
-    || voices.find(v => /en-US/i.test(v.lang)) || voices[0] || null;
+/* 고른 목소리가 있으면 그걸, 없으면 원하는 성별 중 자연스러운 미국 영어 목소리를 고른다 */
+function pickVoice(gender = settings.voiceGender, uri = settings.voiceURI){
+  const exact = voices.find(v => v.voiceURI === uri);
+  if(exact && (!gender || voiceGender(exact) === gender || !voices.some(v => voiceGender(v) === gender))) return exact;
+  const pool = voices.filter(v => voiceGender(v) === gender);
+  const from = pool.length ? pool : voices;
+  return from.find(v => /en-US/i.test(v.lang) && NICE.test(v.name)) || from.find(v => /en-US/i.test(v.lang)) || from[0] || null;
 }
 function speak(text, onend){
   if(!('speechSynthesis' in window)){ toast('이 브라우저는 읽어 주기를 지원하지 않아요.'); return; }
@@ -1292,6 +1485,33 @@ function renderAudio(key){
   if(box && box.dataset.key === key) box.innerHTML = audioUrls[key] ? `<audio controls src="${esc(audioUrls[key])}"></audio><div class="muted sm">내 녹음이에요. 발음과 억양은 AI가 평가하지 않으니 직접 들어 보세요. 새로고침하면 사라져요.</div>` : '';
 }
 
+/* ---------- 대화 상대 프로필 ----------
+   사이트에 함께 올라가는 캐릭터 이미지 6개(profiles 폴더)와 "프로필 없음" 중에서 고른다. 이름은 붙이지 않는다. */
+const PROFILES = [1, 2, 3, 4, 5, 6].map(n => ({id:'c' + n, img:'profiles/' + n + '.png', label:'캐릭터 ' + n}));
+const curProfile = () => PROFILES.find(p => p.id === state.session?.profile) || null;
+let profAfter = null;
+function openProfilePicker(after){
+  profAfter = after || null;
+  renderProfiles();
+  const d = $('#profileDlg'); if(!d.open) d.showModal();
+}
+function renderProfiles(){
+  const cur = curProfile()?.id || '';
+  $('#profGrid').innerHTML = `<button type="button" class="prof-card ${cur ? '' : 'on'}" data-prof="" aria-label="프로필 없음"><span class="prof-none">프로필<br>없음</span></button>`
+    + PROFILES.map(p => `<button type="button" class="prof-card ${p.id === cur ? 'on' : ''}" data-prof="${esc(p.id)}" aria-label="${esc(p.label)}"><img src="${esc(p.img)}" alt="" loading="lazy"></button>`).join('');
+  $$('#profGrid [data-prof]').forEach(b => b.onclick = () => {
+    const S = state.session; if(!S) return;
+    S.profile = PROFILES.some(p => p.id === b.dataset.prof) ? b.dataset.prof : '';
+    S.profileChosen = true; save();
+    $('#profileDlg').close();
+    const fn = profAfter; profAfter = null;
+    if(fn) fn(); else render();
+  });
+}
+$('#profClose').onclick = () => { profAfter = null; $('#profileDlg').close(); };
+/* 시험 시작 직전에 한 번 묻는다. 이미 고른 세트면 바로 시작한다 */
+function startWithProfile(fn){ if(state.session && !state.session.profileChosen) openProfilePicker(fn); else fn(); }
+
 /* ---------- 화면 ---------- */
 const curSet = () => state.session?.sets[state.pos.s];
 const curQ = () => curSet()?.questions[state.pos.q];
@@ -1336,6 +1556,12 @@ function bindBack(){
     go('overview');
   };
 }
+function modeNote(level, mode){
+  if(mode === 'casual') return '캐주얼 대화는 난이도와 상관없이 10문제예요. 난이도는 질문의 깊이와 길이만 바꿔요.';
+  return level && level <= 2
+    ? '난이도 1~2는 실제 OPIc처럼 12문제로 나와요. 실전형은 어드밴스 없이 자기소개, 설문 2세트, 돌발, 롤플레이 2문항이에요.'
+    : '난이도 3~6은 15문제로 나와요.';
+}
 function viewLevel(){
   const lv = state.level, low = lv && lv <= 2;
   return keyBanner() + backBar() + `<section class="card">
@@ -1343,30 +1569,36 @@ function viewLevel(){
     <p class="muted sm">질문은 영어로, 안내는 한국어로 나와요. 요청하기 전에는 모범 답안, 힌트, 번역을 보여 주지 않아요.</p>
     ${LEVELS.map(l => `<label class="opt"><input type="radio" name="level" value="${num(l.n)}" ${lv === l.n ? 'checked' : ''}><div><b>${num(l.n)}단계 ${esc(l.name)}</b><span>${esc(l.desc)}</span></div></label>`).join('')}
     <h3>구성</h3>
-    <label class="opt"><input type="radio" name="mode" value="custom" ${state.mode !== 'real' ? 'checked' : ''}><div><b>1 맞춤형</b><span>5세트. 일상, 업무나 학업, 일상 상황극, 업무나 학업 상황극, 시사와 상식</span></div></label>
-    <label class="opt"><input type="radio" name="mode" value="real" ${state.mode === 'real' ? 'checked' : ''}><div><b>2 실전형</b><span>실제 OPIc 순서. 자기소개, 설문 주제 2세트, 돌발, 롤플레이, 어드밴스(난이도 3~6)</span></div></label>
-    <p class="note" id="modeNote">${low ? '난이도 1~2는 실제 OPIc처럼 12문제로 나와요. 실전형은 어드밴스 없이 자기소개, 설문 2세트, 돌발, 롤플레이 2문항이에요.' : '난이도 3~6은 15문제로 나와요.'}</p>
-    ${state.surveyDone
+    <label class="opt"><input type="radio" name="mode" value="custom" ${state.mode === 'custom' ? 'checked' : ''}><div><b>1 맞춤형</b><span>일상, 업무나 학업, 일상 상황극, 업무나 학업 상황극, 시사와 상식. 난이도 1~2는 12문제, 3~6은 15문제.</span></div></label>
+    <label class="opt"><input type="radio" name="mode" value="real" ${state.mode === 'real' ? 'checked' : ''}><div><b>2 실전형</b><span>실제 OPIc 순서. 자기소개, 설문 주제 2세트, 돌발, 롤플레이, 어드밴스. 난이도 1~2는 실제 시험처럼 어드밴스 없이 12문제, 3~6은 15문제.</span></div></label>
+    <label class="opt"><input type="radio" name="mode" value="casual" ${state.mode === 'casual' ? 'checked' : ''}><div><b>3 캐주얼 대화</b><span>내가 직접 적은 관심사로만 10문제(세트별 3, 3, 4). 묘사, 경험, 비교, 의견에 롤플레이까지 섞어요.</span></div></label>
+    <p class="note" id="modeNote">${esc(modeNote(lv, state.mode))}</p>
+    ${surveyValid(state.survey, state.mode)
       ? `<p class="muted sm" style="margin-top:14px">설문은 지난번 답을 그대로 써요. 설문도 바꾸려면 "설문도 고치기"를 누르세요.</p>
     <div class="row end"><button id="levelSurvey">설문도 고치기 →</button><button class="primary" id="levelNext">이 설정으로 새 세트 만들기</button></div>`
       : `<div class="row end"><button class="primary" id="levelNext">다음: 설문</button></div>`}
   </section>`;
 }
 
+/* 자유 입력 칸. 캐주얼 대화에서는 '내 진짜 관심사'가 필수다 */
+function viewTextFields(casual){
+  return SURVEY_TEXT.map(f => `<div class="field"><label for="sv_${esc(f.k)}">${esc(f.label)} <span class="tag ${casual && f.k === 'interests' ? 'req' : 'opt'}">${casual && f.k === 'interests' ? '필수' : '선택'}</span></label><textarea id="sv_${esc(f.k)}" rows="${num(f.rows || 2)}" placeholder="${esc(f.ph)}">${esc(state.survey[f.k] || '')}</textarea></div>`).join('');
+}
 function viewSurvey(){
   return keyBanner() + backBar() + `<section class="card">
     <h2>2. 설문조사</h2>
-    <p class="sm">지금 설정: <b>${state.level ? `${num(state.level)}단계` : '난이도 미선택'} · ${esc(MODES[state.mode])}</b> <button class="link" id="surveyLevel">난이도와 구성 바꾸기</button></p>
+    <p class="sm">지금 설정: <b>${state.level ? `${num(state.level)}단계` : '난이도 미선택'} · ${esc(MODES[state.mode])}</b></p>
     <div class="warnbox">회사 기밀(고객사명, IP, 설정 원본)은 적지 마세요. 설문과 답변은 고른 AI 회사로 보내지고, Gemini 무료 키로 보낸 내용은 Google 서비스 개선에 쓰일 수 있어요.</div>
-    <p class="muted sm">실제 OPIc Background Survey와 같은 구성이에요. Part 1~3은 하나씩 꼭 골라야 하고, Part 4~7은 합쳐서 ${num(MIN_PICKS)}개 이상 골라야 해요. 문제는 고른 항목과 설문에 없는 돌발 주제에서 골고루 나와요.</p>
+    ${state.mode === 'casual' ? `<p class="note">캐주얼 대화는 Background Survey 없이, 아래 칸에 직접 적은 내 관심사로만 질문해요. "내 진짜 관심사"는 꼭 적어 주세요. 자세히 쓸수록 질문이 나에게 딱 맞아져요.</p>
+    ${viewTextFields(true)}` : `<p class="muted sm">실제 OPIc Background Survey와 같은 구성이에요. Part 1~3은 하나씩 꼭 골라야 하고, Part 4~7은 합쳐서 ${num(MIN_PICKS)}개 이상 골라야 해요. 문제는 고른 항목과 설문에 없는 돌발 주제에서 골고루 나와요.</p>
     ${SURVEY_SINGLE.map(f => `<div class="field"><div class="flabel">${esc(f.part)} · ${esc(f.label)} <span class="tag req">필수</span></div>
       <div class="picks" role="radiogroup">${f.opts.map((o, i) => `<label class="pick"><input type="radio" name="sv_${esc(f.k)}" value="${num(i)}" ${state.survey[f.k] === o ? 'checked' : ''}>${esc(o)}</label>`).join('')}</div></div>`).join('')}
     <div class="note sticky-count" id="pickCount"></div>
     ${SURVEY_MULTI.map(f => `<div class="field"><div class="flabel">${esc(f.part)} · ${esc(f.label)} <span class="tag req">필수</span> <small class="inline">Part 4~7 합쳐서 ${num(MIN_PICKS)}개 이상</small></div>
       <div class="picks">${f.opts.map((o, i) => `<label class="pick"><input type="checkbox" data-k="${esc(f.k)}" value="${num(i)}" ${(state.survey[f.k] || []).includes(o) ? 'checked' : ''}>${esc(o)}</label>`).join('')}</div></div>`).join('')}
-    ${state.mode === 'real' ? `<p class="note">실전형은 실제 시험처럼 Background Survey만으로 출제해요. 자유 입력 칸은 맞춤형에서만 써요.</p>` : `<h3>더 알려 주기 <span class="tag opt">선택</span></h3>
+    ${state.mode === 'real' ? `<p class="note">실전형은 실제 시험처럼 Background Survey만으로 출제해요. 자유 입력 칸은 맞춤형과 캐주얼 대화에서 써요.</p>` : `<h3>더 알려 주기 <span class="tag opt">선택</span></h3>
     <p class="muted sm">비워 둬도 돼요. 적어 두면 업무나 학업 세트, 사회 이슈 세트를 더 나에게 맞게 만들어요.</p>
-    ${SURVEY_TEXT.map(f => `<div class="field"><label for="sv_${esc(f.k)}">${esc(f.label)} <span class="tag opt">선택</span></label><textarea id="sv_${esc(f.k)}" rows="2" placeholder="${esc(f.ph)}">${esc(state.survey[f.k] || '')}</textarea></div>`).join('')}`}
+    ${viewTextFields(false)}`}`}
     <div class="spread"><button id="surveyBack">← 난이도</button><button class="primary" id="surveyGo">문제 만들기</button></div>
   </section>`;
 }
@@ -1415,13 +1647,30 @@ function viewPractice(){
   const last = qi === s.questions.length - 1, lastSet = si === S.sets.length - 1;
   const key = `${si}-${qi}`;
   const show = settings.showText || q.reveal;
-  return `<div class="crumbs"><button class="small" id="toOverview">← 목록</button><span>세트 ${num(si+1)}/${num(S.sets.length)} · ${esc(s.name)}</span><span>문항 ${num(q.no)}/${num(S.sets.reduce((n, s) => n + s.questions.length, 0))}</span><button class="small quit" id="quitTest">시험 그만두기</button></div>
+  const P = curProfile();
+  const allQs = S.sets.flatMap(x => x.questions);
+  const qCls = x => x.no === q.no ? 'cur' : words(x.answer) > 0 ? 'done' : '';
+  return `<div class="crumbs"><button class="small" id="toOverview">← 목록</button><span>세트 ${num(si+1)}/${num(S.sets.length)} · ${esc(s.name)}</span><span>문항 ${num(q.no)}/${num(S.sets.reduce((n, s) => n + s.questions.length, 0))}</span><button class="small" id="changeProf">프로필</button><button class="small quit" id="quitTest">시험 그만두기</button></div>
   ${s.guide ? `<p class="guide">${esc(s.guide)}</p>` : ''}
-  <section class="card">
+  ${P ? `<section class="card">
+    <div class="exam-head">Question ${num(q.no)} of ${num(allQs.length)}</div>
+    <div class="exam-body">
+      <div class="exam-left">
+        <div class="avatar"><img src="${esc(P.img)}" alt="${esc(P.label)}"></div>
+        <button id="play" class="exam-play">▶ Click 'PLAY' to Listen</button>
+      </div>
+      <div class="exam-right">
+        <div class="spread"><span class="sm muted">문항 진행</span><span class="muted sm" id="plays">들은 횟수 ${num(q.plays)}</span></div>
+        <div class="qgrid">${allQs.map(x => `<span class="${qCls(x)}">${num(x.no)}</span>`).join('')}</div>
+        <div class="row" style="margin-top:12px"><span class="chip">${esc(q.type)}</span><button id="reveal" class="small">${show ? '질문 숨기기' : '질문 글자 보기'}</button></div>
+        ${show ? `<p class="qtext">${esc(q.text)}</p>` : `<p class="qhidden">질문을 먼저 소리로 들어 보세요.</p>`}
+      </div>
+    </div>
+  </section>` : `<section class="card">
     <div class="spread"><span class="chip">${esc(q.type)}</span><span class="muted sm" id="plays">들은 횟수 ${num(q.plays)}</span></div>
     <div class="row" style="margin-top:10px"><button id="play">▶ 질문 듣기</button><button id="reveal" class="small">${show ? '질문 숨기기' : '질문 글자 보기'}</button></div>
     ${show ? `<p class="qtext">${esc(q.text)}</p>` : `<p class="qhidden">질문을 먼저 소리로 들어 보세요.</p>`}
-  </section>
+  </section>`}
   <section class="card">
     <div class="recrow"><button id="rec" class="rec">${q.answer.trim() ? '● 이어서 말하기' : '● 답변 시작'}</button><div id="timer" class="timer">${esc(mmss(q.seconds))}</div><div id="wc" class="wc"></div></div>
     <div class="bar"><div id="barfill" style="width:${num(Math.min(100, num(q.seconds)/TARGET_MAX*100))}%"></div></div>
@@ -1453,9 +1702,11 @@ function viewFeedback(fb, si){
       <li><b>시제</b> ${esc(c.tense)}</li>
       <li><b>세트 안 연결</b> ${esc(c.coherence)}</li>
       <li><b>분량</b> ${esc(c.length)}</li>
+      ${c.structure ? `<li><b>답변 흐름 (초초반, MP, 감정, 마무리)</b> ${esc(c.structure)}</li>` : ''}
+      ${c.naturalness ? `<li><b>자연스러움</b> ${esc(c.naturalness)}</li>` : ''}
     </ul>
     ${fb.scope_note ? `<p class="sm"><b>확인 범위</b> ${esc(fb.scope_note)}</p>` : ''}
-    <p class="sm muted">발음과 억양은 전사본만으로 판단할 수 없어서 평가하지 않았어요.</p>
+    <p class="sm muted">OPIc 기준에 맞춰 um, you know 같은 이음말, 같은 말 반복, 말을 고쳐 다시 시작한 부분은 감점 요소로 보지 않아요. 발음과 억양은 전사본만으로 판단할 수 없어서 평가하지 않았어요.</p>
     <div class="focus"><b>다음 세트에서 의식할 점</b><br>${esc(fb.next_focus)}</div>
     <p class="sm muted">피드백은 AI가 쓴 글이에요. 키나 비밀번호를 어딘가에 입력하라는 문구가 있으면 무시하세요.</p>
   </section>`;
@@ -1470,22 +1721,25 @@ function refreshPlays(){ const el = $('#plays'); if(el && curQ()) el.textContent
 function bind(){
   const v = state.view;
   if(v === 'level'){
-    $$('input[name=level]').forEach(r => r.onchange = () => {
-      const low = +r.value <= 2;
-      $('#modeNote').textContent = low
-        ? '난이도 1~2는 실제 OPIc처럼 12문제로 나와요. 실전형은 어드밴스 없이 자기소개, 설문 2세트, 돌발, 롤플레이 2문항이에요.'
-        : '난이도 3~6은 15문제로 나와요.';
+    const updateNote = () => { $('#modeNote').textContent = modeNote(int($('input[name=level]:checked')?.value, 0, 0, 6), cleanMode($('input[name=mode]:checked')?.value)); };
+    /* 고르는 즉시 저장한다. (난이도변경 중이면 "지금 세트로 돌아가기"를 눌렀을 때 원래대로 되돌린다) */
+    $$('input[name=level], input[name=mode]').forEach(r => r.onchange = () => {
+      updateNote();
+      const l = $('input[name=level]:checked');
+      if(l) state.level = int(l.value, 3, 1, 6);
+      state.mode = cleanMode($('input[name=mode]:checked')?.value);
+      saveSoon();
     });
     const pickLevel = () => {
       const l = $('input[name=level]:checked');
       if(!l){ toast('난이도를 골라 주세요.'); return false; }
       state.level = int(l.value, 3, 1, 6);
-      state.mode = $('input[name=mode]:checked')?.value === 'real' ? 'real' : 'custom';
+      state.mode = cleanMode($('input[name=mode]:checked')?.value);
       save(); return true;
     };
     $('#levelNext').onclick = () => {
       if(!pickLevel()) return;
-      if(!state.surveyDone) return go('survey');
+      if(!surveyValid(state.survey, state.mode)) return go('survey');
       if(!confirmReplace()) return;
       generate();
     };
@@ -1494,8 +1748,9 @@ function bind(){
   if(v === 'survey'){
     const collect = () => {
       const s = {};
-      for(const f of SURVEY_SINGLE){ const r = $(`input[name="sv_${f.k}"]:checked`); s[f.k] = r ? f.opts[int(r.value, 0, 0, f.opts.length - 1)] : ''; }
-      for(const f of SURVEY_MULTI) s[f.k] = $$(`input[data-k="${f.k}"]:checked`).map(c => f.opts[int(c.value, 0, 0, f.opts.length - 1)]);
+      /* 캐주얼 대화에서는 Background Survey 칸이 화면에 없으니, 저장된 값을 그대로 둔다 */
+      for(const f of SURVEY_SINGLE){ if(!$(`input[name="sv_${f.k}"]`)){ s[f.k] = state.survey[f.k] || ''; continue; } const r = $(`input[name="sv_${f.k}"]:checked`); s[f.k] = r ? f.opts[int(r.value, 0, 0, f.opts.length - 1)] : ''; }
+      for(const f of SURVEY_MULTI) s[f.k] = $(`input[data-k="${f.k}"]`) ? $$(`input[data-k="${f.k}"]:checked`).map(c => f.opts[int(c.value, 0, 0, f.opts.length - 1)]) : (state.survey[f.k] || []);
       /* 실전형에서는 자유 입력 칸이 화면에 없으니, 맞춤형에서 적어 둔 값을 그대로 둔다 */
       for(const f of SURVEY_TEXT){ const el = $('#sv_' + f.k); s[f.k] = el ? el.value.trim() : (state.survey[f.k] || ''); }
       state.survey = cleanSurvey(s);
@@ -1503,16 +1758,23 @@ function bind(){
     const showCount = () => {
       collect();
       const n = pickCount(state.survey), el = $('#pickCount');
+      if(!el) return;
       el.textContent = `Part 4~7 선택 ${n}개 / 최소 ${MIN_PICKS}개` + (n >= MIN_PICKS ? ' · 충분해요' : ` · ${MIN_PICKS - n}개 더 골라 주세요`);
       el.classList.toggle('done', n >= MIN_PICKS);
     };
     $$('#app .pick input').forEach(i => i.onchange = () => { showCount(); saveSoon(); });
+    /* 자유 입력 칸도 쓰는 대로 저장한다 */
+    $$('#app textarea[id^="sv_"]').forEach(t => t.oninput = () => { collect(); saveSoon(); });
     showCount();
     $('#surveyBack').onclick = () => { collect(); go('level'); };
-    $('#surveyLevel').onclick = () => { collect(); save(); go('level'); };
     $('#surveyGo').onclick = () => {
       collect();
       if(!state.level){ toast('난이도부터 골라 주세요.'); go('level'); return; }
+      if(state.mode === 'casual'){
+        if(!casualReady(state.survey)){ toast('캐주얼 대화는 "내 진짜 관심사"를 10자 이상 적어야 해요. 좋아하는 것, 요즘 빠진 것, 자주 하는 일을 자세히 적어 주세요.', 8000); $('#sv_interests').focus(); return; }
+        if(!confirmReplace()) return;
+        state.surveyDone = true; save(); generate(); return;
+      }
       const miss = SURVEY_SINGLE.find(f => !state.survey[f.k]);
       if(miss){ toast(`${miss.part} "${miss.label}"은 필수예요. 하나를 골라 주세요.`); $(`input[name="sv_${miss.k}"]`).closest('.field').scrollIntoView({behavior:'smooth', block:'center'}); return; }
       const n = pickCount(state.survey);
@@ -1535,12 +1797,12 @@ function bind(){
       toast('답한 세트의 피드백을 모두 받았어요. 각 세트의 "피드백 보기"를 눌러 확인하세요.', 6000);
     };
     const startBtn = $('#startBtn');
-    if(startBtn) startBtn.onclick = () => {
+    if(startBtn) startBtn.onclick = () => startWithProfile(() => {
       const S = state.session;
       for(let i = 0; i < S.sets.length; i++){ const j = S.sets[i].questions.findIndex(q => !q.answer.trim()); if(j >= 0) return movePos(i, j); }
       movePos(0, 0);
-    };
-    $$('[data-goset]').forEach(b => b.onclick = () => movePos(+b.dataset.goset, 0));
+    });
+    $$('[data-goset]').forEach(b => b.onclick = () => startWithProfile(() => movePos(+b.dataset.goset, 0)));
     $$('[data-fb]').forEach(b => b.onclick = async () => {
       const i = +b.dataset.fb;
       if(busy || !ensureKey()) return;
@@ -1559,6 +1821,7 @@ function bind(){
     const S = state.session, si = state.pos.s, qi = state.pos.q, q = curQ(), key = `${si}-${qi}`;
     updateWC(q.answer); renderAudio(key);
     $('#toOverview').onclick = () => go('overview');
+    $('#changeProf').onclick = () => { stopEverything(); openProfilePicker(null); };
     $('#quitTest').onclick = () => {
       const done = S.sets.reduce((n, s) => n + s.questions.filter(x => words(x.answer) > 0).length, 0);
       if(!confirm(`시험을 여기서 그만둘까요?\n\n지금까지 답한 문항 ${done}개만 남기고, 남은 문항은 건너뛰어요. 그만둔 시험은 다시 이어서 할 수 없고, 답한 세트만 피드백을 받을 수 있어요.`)) return;
@@ -1586,7 +1849,7 @@ function command(cmd){
   if(cmd === 'level'){ beginEdit(); return go('level'); }
   if(cmd === 'survey'){ beginEdit(); return go('survey'); }
   if(cmd === 'new'){
-    if(!state.surveyDone || !state.level){ toast('먼저 난이도와 설문을 마쳐 주세요.'); return; }
+    if(!state.level || !surveyValid(state.survey, state.mode)){ toast(state.mode === 'casual' ? '캐주얼 대화는 설문의 "내 진짜 관심사"를 먼저 적어 주세요.' : '먼저 난이도와 설문을 마쳐 주세요.'); return; }
     if(!confirmReplace()) return;
     generate();
   }
@@ -1629,6 +1892,8 @@ function sheetMd(full){
       md += `\n### 피드백\n`;
       (f.items || []).forEach((it, k) => md += `${k+1}. [${it.category}]\n   - 내 문장: ${it.original}${it.verified ? '' : ' (전사본에서 그대로 찾지 못함)'}\n   - 고친 문장: ${it.corrected}\n   - 이유: ${it.reason}\n`);
       md += `\n- 질문에 맞게 답했나: ${c.relevance}\n- 시제: ${c.tense}\n- 세트 안 연결: ${c.coherence}\n- 분량: ${c.length}\n`;
+      if(c.structure) md += `- 답변 흐름 (초초반, MP, 감정, 마무리): ${c.structure}\n`;
+      if(c.naturalness) md += `- 자연스러움: ${c.naturalness}\n`;
       if(f.scope_note) md += `- 확인 범위: ${f.scope_note}\n`;
       md += `- 발음과 억양은 평가하지 않음\n- 다음 세트에서 의식할 점: ${f.next_focus}\n`;
     }
@@ -1745,6 +2010,8 @@ function openSettings(){
   $('#sRate').value = settings.rate; $('#sRateVal').textContent = `${(+settings.rate).toFixed(2)}배`;
   $('#sShow').checked = settings.showText;
   $('#sRecord').checked = settings.recordAudio;
+  $('#sVoice').dataset.gender = settings.voiceGender; $('#sVoice').dataset.uri = settings.voiceURI;
+  $(settings.voiceGender === 'male' ? '#sGenderM' : '#sGenderF').checked = true;
   loadVoices();
   if(!d.open) d.showModal();
 }
@@ -1759,11 +2026,19 @@ $('#sKeyDel').onclick = async () => {
   updateKeyStatus(p);
 };
 $('#sTest').onclick = () => {
-  const keep = {rate:settings.rate, voiceURI:settings.voiceURI};
-  settings.rate = +$('#sRate').value; settings.voiceURI = $('#sVoice').value;
+  const keep = {rate:settings.rate, voiceURI:settings.voiceURI, voiceGender:settings.voiceGender};
+  settings.rate = +$('#sRate').value; settings.voiceURI = $('#sVoice').value; settings.voiceGender = $('#sVoice').dataset.gender || settings.voiceGender;
   speak("Hi, I'm your OPIc examiner. Tell me a little bit about yourself.");
-  settings.rate = keep.rate; settings.voiceURI = keep.voiceURI;
+  Object.assign(settings, keep);
 };
+/* 성별을 바꾸면 그 성별 목소리 중 하나를 바로 골라 준다 */
+$$('input[name=sGender]').forEach(r => r.onchange = () => {
+  const sel = $('#sVoice');
+  sel.dataset.gender = r.value; sel.dataset.uri = '';
+  loadVoices();
+  sel.dataset.uri = sel.value;
+});
+$('#sVoice').onchange = e => { e.target.dataset.uri = e.target.value; };
 $('#sLoadModels').onclick = async () => {
   const p = PROV_IDS.includes($('#sProv').value) ? $('#sProv').value : 'gemini';
   if(swControlled()){ toast(SW_MSG, 12000); return; }
@@ -1829,6 +2104,7 @@ $('#sSave').onclick = async () => {
   const rate = num($('#sRate').value);
   settings.rate = rate >= 0.5 && rate <= 2 ? rate : 1;
   settings.voiceURI = $('#sVoice').value;
+  settings.voiceGender = $('#sVoice').dataset.gender === 'male' ? 'male' : 'female';
   settings.showText = $('#sShow').checked;
   settings.recordAudio = $('#sRecord').checked;
   saveSettings(); $('#settingsDlg').close(); toast(note, 6000);
@@ -1858,6 +2134,9 @@ try{
 }catch{}
 
 window.addEventListener('beforeunload', () => { stopEverything(); save(); });
+/* iPhone Safari는 beforeunload가 잘 안 와서, 탭을 숨기거나 떠날 때도 저장한다 */
+window.addEventListener('pagehide', () => save());
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') save(); });
 render();
 if(stateReset) toast('저장된 기록의 형식이 올바르지 않아서 처음 상태로 되돌렸어요.', 7000);
 if(migrateBlocked) toast('예전 버전이 평문으로 저장한 키를 지웠어요. ' + SW_MSG + ' 키를 발급한 곳에서 키를 새로 만드는 걸 권해요.', 15000);
