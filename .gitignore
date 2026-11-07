@@ -1,3 +1,8 @@
 # 캐릭터 이미지는 저작권이 있어서 공개 저장소에 올리지 않는다.
 # 앱의 "프로필 추가"로 각 기기에서 직접 넣어 쓴다.
 image/
+
+# profiles 바로 아래 원본 PNG는 올리지 않는다. 앱은 profiles/v1, profiles/v2 안의 파일만 쓴다.
+/profiles/*.png
+# 버전 폴더 안의 원본(큰 PNG)도 올리지 않는다. 앱은 줄인 webp만 쓴다.
+/profiles/*/원본/

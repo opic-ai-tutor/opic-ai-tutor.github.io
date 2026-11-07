@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ENB9Y64YNPu3/HytTK8NXL0C7W+UjiSb1bOQjAuSoYk='; style-src 'unsafe-inline'; img-src 'self' data: blob:; media-src blob:; connect-src https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mM6aQY1mn3rDmQt0uKtwm0pKvE29SpxbGkE7vWYQwQg='; style-src 'unsafe-inline'; img-src 'self' data: blob:; media-src blob:; connect-src https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
 <meta charset="utf-8">
 <meta name="referrer" content="strict-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -1487,7 +1487,17 @@ function renderAudio(key){
 
 /* ---------- 대화 상대 프로필 ----------
    사이트에 함께 올라가는 캐릭터 이미지 6개(profiles 폴더)와 "프로필 없음" 중에서 고른다. 이름은 붙이지 않는다. */
-const PROFILES = [1, 2, 3, 4, 5, 6].map(n => ({id:'c' + n, img:'profiles/' + n + '.png', label:'캐릭터 ' + n}));
+/* 프로필 이미지 버전. 다른 버전으로 되돌리려면 PROFILE_SET만 바꾸면 된다.
+   v1: 처음 만든 6개 (profiles/v1)
+   v2: 1, 2, 4, 5번을 새 그림으로 교체 (profiles/v2), 3번과 6번은 v1 그대로
+   v3: 6개 모두 profiles/v3 (원본 PNG는 profiles/v3/원본, GitHub에는 올리지 않음) */
+const PROFILE_SET = 'v3';
+const PROFILE_SETS = {
+  v1:['v1/1.png', 'v1/2.png', 'v1/3.png', 'v1/4.png', 'v1/5.png', 'v1/6.png'],
+  v2:['v2/1.webp', 'v2/2.webp', 'v1/3.png', 'v2/4.webp', 'v2/5.webp', 'v1/6.png'],
+  v3:['v3/1.webp', 'v3/2.webp', 'v3/3.webp', 'v3/4.webp', 'v3/5.webp', 'v3/6.webp']
+};
+const PROFILES = PROFILE_SETS[PROFILE_SET].map((f, i) => ({id:'c' + (i + 1), img:'profiles/' + f, label:'캐릭터 ' + (i + 1)}));
 const curProfile = () => PROFILES.find(p => p.id === state.session?.profile) || null;
 let profAfter = null;
 function openProfilePicker(after){
